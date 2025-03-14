@@ -1,8 +1,11 @@
 package com.team09.sb01hrbank09.entity;
 
 import static jakarta.persistence.EnumType.*;
+import static jakarta.persistence.FetchType.*;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+
+import com.team09.sb01hrbank09.entity.Enum.ChangeLogType;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -12,9 +15,11 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.Getter;
 
 @Entity
 @Table(name = "change_logs")
+@Getter
 public class ChangeLog {
 
 	@Id
@@ -25,7 +30,7 @@ public class ChangeLog {
 	@Column(nullable = false, length = 20)
 	private ChangeLogType type;
 
-	@ManyToOne
+	@ManyToOne(fetch = LAZY)
 	@JoinColumn(name = "employee_number")
 	private Employee employee;
 
@@ -38,38 +43,27 @@ public class ChangeLog {
 	private String ipAddress;
 
 	@Column(nullable = false)
-	private LocalDateTime at;
+	private Instant at;
 
 	protected ChangeLog() {
 	}
 
-	private ChangeLog(ChangeLogType type, Employee employee, String details, String ipAddress, String memo,
-		LocalDateTime at) {
+	private ChangeLog(ChangeLogType type, Employee employee, String details, String ipAddress, String memo) {
 		this.type = type;
 		this.employee = employee;
 		this.details = details;
 		this.ipAddress = ipAddress;
 		this.memo = memo;
-		this.at = at;
-	}
-
-	public static ChangeLog createChangeLog(ChangeLogType type, Employee employee, String details, String ipAddress,
-		String memo, LocalDateTime at) {
-		return new ChangeLog(type, employee, details, ipAddress, memo, at);
-	}
-
-	public static ChangeLog createChangeLog(ChangeLogType type, Employee employee, String details, String ipAddress,
-		LocalDateTime at) {
-		return new ChangeLog(type, employee, details, ipAddress, null, at);
+		this.at = Instant.now();
 	}
 
 	public static ChangeLog createChangeLog(ChangeLogType type, Employee employee, String details, String ipAddress,
 		String memo) {
-		return new ChangeLog(type, employee, details, ipAddress, memo, LocalDateTime.now());
+		return new ChangeLog(type, employee, details, ipAddress, memo);
 	}
 
 	public static ChangeLog createChangeLog(ChangeLogType type, Employee employee, String details, String ipAddress) {
-		return new ChangeLog(type, employee, details, ipAddress, null, LocalDateTime.now());
+		return new ChangeLog(type, employee, details, ipAddress, null);
 	}
 
 }

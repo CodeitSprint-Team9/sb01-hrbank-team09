@@ -2,7 +2,7 @@ package com.team09.sb01hrbank09.entity;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDate;
+import java.time.Instant;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -33,7 +33,6 @@ public class File {
 	@Column(nullable = false, length = 100)
 	private String path;
 
-
 	private File(String name, String type, Long size, String typePath) {
 		this.path = Paths.get(System.getProperty("user.dir"), "files", typePath).toString();
 		this.type = type;
@@ -53,8 +52,8 @@ public class File {
 	}
 
 	public static File createCsvFile(String type, Long size) {
-		String date= LocalDate.now().toString();
-		return new File("employee_backup_"+date+".csv", type, size, "csv");
+		String date = Instant.now().toString();
+		return new File("employee_backup_" + date + ".csv", type, size, "csv");
 	}
 
 	public void updateFileName(String updateName) {
@@ -64,7 +63,5 @@ public class File {
 	public Path getFilePath() {
 		return Paths.get(this.path);
 	}
-
-
 
 }

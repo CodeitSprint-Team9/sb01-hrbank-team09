@@ -1,19 +1,26 @@
 package com.team09.sb01hrbank09.entity;
 
 import static jakarta.persistence.EnumType.*;
+import static jakarta.persistence.FetchType.*;
 import static jakarta.persistence.GenerationType.*;
 
-import java.time.LocalDate;
+import java.time.Instant;
+
+import com.team09.sb01hrbank09.entity.Enum.EmployeeStatus;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import lombok.Getter;
 
 @Entity
 @Table(name = "employees")
+@Getter
 public class Employee {
 
 	@Id
@@ -33,13 +40,65 @@ public class Employee {
 	private String position;
 
 	@Column(nullable = false)
-	private LocalDate hireDateFrom;
+	private Instant hireDateFrom;
 
 	@Enumerated(STRING)
 	@Column(nullable = false, length = 20)
 	private EmployeeStatus status;
 
+	@OneToOne(fetch = LAZY)
+	@JoinColumn(name = "file_id")
+	private File file;
+
+	@OneToOne(fetch = LAZY)
+	@JoinColumn(name = "dept_id")
+	private Department department;
+
 	protected Employee() {
 	}
 
+	private Employee(String name, String email, String employeeNumber, String position
+		, EmployeeStatus status, File file, Department department) {
+		this.name = name;
+		this.email = email;
+		this.employeeNumber = employeeNumber;
+		this.position = position;
+		this.hireDateFrom = Instant.now();
+		this.status = status;
+		this.file = file;
+		this.department = department;
+	}
+
+	public static Employee createEmployee(String name, String email, String employeeNumber, String position,
+		EmployeeStatus status, File file, Department department) {
+		return new Employee(name, email, employeeNumber, position, status, file, department);
+	}
+
+	public void updatePosition(String position) {
+		this.position = position;
+	}
+
+	public void updateEmail(String email) {
+		this.email = email;
+	}
+
+	public void updateName(String name) {
+		this.name = name;
+	}
+
+	public void updateHireDateFrom(Instant hireDateFrom) {
+		this.hireDateFrom = hireDateFrom;
+	}
+
+	public void updateStatus(EmployeeStatus status) {
+		this.status = status;
+	}
+
+	public void updateFile(File file) {
+		this.file = file;
+	}
+
+	public void updateDepartment(Department department) {
+		this.department = department;
+	}
 }

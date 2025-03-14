@@ -1,6 +1,6 @@
 package com.team09.sb01hrbank09.entity;
 
-import java.time.LocalDate;
+import java.time.Instant;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -26,17 +26,15 @@ public class Department {
 	@Column(nullable = false, length = 20)
 	private String description;
 	@Column(name = "created_at", nullable = false)
-	private LocalDate createdAt;
+	private Instant createdAt;
 	@Column(name = "employee_count", nullable = false)
 	private int employeeCount = 0;
 
-	private Department( String name, String description) {
+	private Department(String name, String description) {
 		this.name = name;
 		this.description = description;
-		this.createdAt = LocalDate.now();
+		this.createdAt = Instant.now();
 	}
-
-
 
 	public static Department createDepartments(String name, String description) {
 		return new Department(name, description);
@@ -51,7 +49,7 @@ public class Department {
 	}
 
 	public void updateCreatedLocalDate() {
-		this.createdAt = LocalDate.now();
+		this.createdAt = Instant.now();
 	}
 
 	public void increaseCount() {
@@ -61,6 +59,5 @@ public class Department {
 	public void decreaseCount() {
 		this.employeeCount--;
 	}
-
 
 }
