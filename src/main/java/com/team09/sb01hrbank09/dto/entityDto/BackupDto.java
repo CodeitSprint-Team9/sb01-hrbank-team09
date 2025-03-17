@@ -10,8 +10,6 @@ public record BackupDto(
 	Instant endedAt,
 	BackupStatus status,
 	String worker,
-	Long employeeId,
 	Long fileId
-
 ) {
 }

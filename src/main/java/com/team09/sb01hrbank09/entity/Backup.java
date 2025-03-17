@@ -14,7 +14,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
@@ -44,17 +43,16 @@ public class Backup {
 	@Column(name = "worker", nullable = false)
 	private String worker;
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "employee_id", nullable = false)
-	private Employee employeeId;
+	// @ManyToOne(fetch = FetchType.LAZY)
+	// @JoinColumn(name = "employee_id", nullable = false)
+	// private Employee employeeId;
 
 	@OneToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "file_id")
 	private File fileId;
 
-	private Backup(String worker, Employee employeeId, File fileId, BackupStatus backupStatus) {
+	private Backup(String worker, File fileId, BackupStatus backupStatus) {
 		this.worker = worker;
-		this.employeeId = employeeId;
 		this.fileId = fileId;
 		this.status = backupStatus;
 		this.startedAt = Instant.now();
@@ -62,7 +60,7 @@ public class Backup {
 	}
 
 	public static Backup createBackup(String worker, Employee employeeId, File fileId) {
-		return new Backup(worker, employeeId, fileId, BackupStatus.IN_PROGRESS);
+		return new Backup(worker, fileId, BackupStatus.IN_PROGRESS);
 	}
 
 	public void setStatusSkipped() {
