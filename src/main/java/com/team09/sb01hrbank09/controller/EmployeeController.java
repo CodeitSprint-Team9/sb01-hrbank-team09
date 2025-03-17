@@ -2,6 +2,7 @@ package com.team09.sb01hrbank09.controller;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -94,7 +95,7 @@ public class EmployeeController {
 	}
 
 	@GetMapping("/stats/trend")
-	ResponseEntity<EmployeeTrendDto> getEmployeeTrend(
+	ResponseEntity<List<EmployeeTrendDto>> getEmployeeTrend(
 		@RequestParam(required = false) Instant from,
 		@RequestParam(required = false) Instant to,
 		@RequestParam(required = false, defaultValue = "month") String unit) {
@@ -109,7 +110,7 @@ public class EmployeeController {
 			from = convertInstant(unit, from, to);
 		}
 
-		EmployeeTrendDto response = employeeServiceInterface.getEmployeeTrend(from, to, unit);
+		List<EmployeeTrendDto> response = employeeServiceInterface.getEmployeeTrend(from, to, unit);
 		return ResponseEntity.ok(response);
 	}
 
