@@ -26,14 +26,14 @@ public class Department {
 	@Column(nullable = false, length = 20)
 	private String description;
 	@Column(name = "created_at", nullable = false)
-	private Instant createdAt;
+	private Instant establishedDate;
 	@Column(name = "employee_count", nullable = false)
 	private int employeeCount = 0;
 
 	private Department(String name, String description) {
 		this.name = name;
 		this.description = description;
-		this.createdAt = Instant.now();
+		this.establishedDate = Instant.now();
 	}
 
 	public static Department createDepartments(String name, String description) {
@@ -49,7 +49,7 @@ public class Department {
 	}
 
 	public void updateCreatedLocalDate() {
-		this.createdAt = Instant.now();
+		this.establishedDate = Instant.now();
 	}
 
 	public void increaseCount() {
