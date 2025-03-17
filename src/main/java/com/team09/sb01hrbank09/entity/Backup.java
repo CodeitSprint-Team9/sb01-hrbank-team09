@@ -41,8 +41,8 @@ public class Backup {
 	@Enumerated(STRING)
 	private BackupStatus status;
 
-	@Column(name = "ip_address", nullable = false)
-	private String ipAddress;
+	@Column(name = "worker", nullable = false)
+	private String worker;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "employee_id", nullable = false)
@@ -52,8 +52,8 @@ public class Backup {
 	@JoinColumn(name = "file_id")
 	private File fileId;
 
-	private Backup(String ipAddress, Employee employeeId, File fileId, BackupStatus backupStatus) {
-		this.ipAddress = ipAddress;
+	private Backup(String worker, Employee employeeId, File fileId, BackupStatus backupStatus) {
+		this.worker = worker;
 		this.employeeId = employeeId;
 		this.fileId = fileId;
 		this.status = backupStatus;
@@ -61,8 +61,8 @@ public class Backup {
 		this.endedAt = null;
 	}
 
-	public static Backup createBackup(String ipAddress, Employee employeeId, File fileId) {
-		return new Backup(ipAddress, employeeId, fileId, BackupStatus.IN_PROGRESS);
+	public static Backup createBackup(String worker, Employee employeeId, File fileId) {
+		return new Backup(worker, employeeId, fileId, BackupStatus.IN_PROGRESS);
 	}
 
 	public void setStatusSkipped() {

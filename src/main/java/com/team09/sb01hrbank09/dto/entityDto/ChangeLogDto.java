@@ -7,7 +7,7 @@ import com.team09.sb01hrbank09.entity.Enum.ChangeLogType;
 public record ChangeLogDto(
 	Long id,
 	ChangeLogType type,
-	Long employee,
+	String employeeNumber,
 	String details,
 	String memo,
 	String ipAddress,

@@ -9,9 +9,9 @@ public record BackupDto(
 	Instant startedAt,
 	Instant endedAt,
 	BackupStatus status,
-	String ipAddress,
+	String worker,
 	Long employeeId,
-	FileDto fileId
+	Long fileId
 
 ) {
 }
