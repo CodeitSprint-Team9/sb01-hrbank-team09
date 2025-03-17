@@ -1,0 +1,67 @@
+package com.team09.sb01hrbank09.controller;
+
+import java.time.Instant;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.team09.sb01hrbank09.dto.entityDto.BackupDto;
+import com.team09.sb01hrbank09.dto.request.CursorPageRequestBackupDto;
+import com.team09.sb01hrbank09.dto.response.CursorPageResponseBackupDto;
+import com.team09.sb01hrbank09.mapper.BackupMapper;
+import com.team09.sb01hrbank09.service.BackupLogServiceInterface;
+
+import lombok.RequiredArgsConstructor;
+
+@RequiredArgsConstructor
+@RestController
+@RequestMapping("/api/backups")
+public class BackupContoller {
+	private final BackupLogServiceInterface backupLogServiceInterface;
+	private final BackupMapper backupMapper;
+
+	@PostMapping
+	public ResponseEntity<BackupDto> createBackup(HttpServletRequest request) {
+		String ipAddress = request.getHeader("X-Forwarded-For");
+		if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
+			ipAddress = request.getRemoteAddr();
+		}
+		BackupDto response = backupLogServiceInterface.createBackup(ipAddress);
+
+		return ResponseEntity.ok(response);
+	}
+
+	@GetMapping
+	public ResponseEntity<CursorPageResponseBackupDto> findBackupList(
+		@RequestParam(required = false) String worker,
+		@RequestParam(required = false) String status,
+		@RequestParam(required = false) Instant startedAtFrom,
+		@RequestParam(required = false) Instant startedAtTo,
+		@RequestParam(required = false) Long idAfter,
+		@RequestParam(required = false) String cursor,
+		@RequestParam(defaultValue = "10") int size,
+		@RequestParam(defaultValue = "startedAt") String sortField,
+		@RequestParam(defaultValue = "desc") String sortDirection
+	) {
+		CursorPageRequestBackupDto requestDto = new CursorPageRequestBackupDto(
+			worker, status, startedAtFrom, startedAtTo, idAfter, cursor, size, sortField, sortDirection
+		);
+		CursorPageResponseBackupDto response = backupLogServiceInterface.findBackupList(requestDto);
+
+		return ResponseEntity.ok(response);
+	}
+
+	@GetMapping("/latest")
+	public ResponseEntity<BackupDto> findLatestBackup(@RequestParam(defaultValue = "COMPLETED") String status) {
+		BackupDto response = backupLogServiceInterface.findLatestBackup(status);
+
+		return ResponseEntity.ok(response);
+
+	}
+}

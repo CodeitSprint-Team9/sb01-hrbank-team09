@@ -58,20 +58,20 @@ public class Employee {
 	}
 
 	private Employee(String name, String email, String employeeNumber, String position
-		, EmployeeStatus status, File file, Department department) {
+		, Instant hireDateFrom, EmployeeStatus status, File file, Department department) {
 		this.name = name;
 		this.email = email;
 		this.employeeNumber = employeeNumber;
 		this.position = position;
-		this.hireDateFrom = Instant.now();
+		this.hireDateFrom = hireDateFrom;
 		this.status = status;
 		this.file = file;
 		this.department = department;
 	}
 
 	public static Employee createEmployee(String name, String email, String employeeNumber, String position,
-		EmployeeStatus status, File file, Department department) {
-		return new Employee(name, email, employeeNumber, position, status, file, department);
+		Instant hireDateFrom, EmployeeStatus status, File file, Department department) {
+		return new Employee(name, email, employeeNumber, position, hireDateFrom, status, file, department);
 	}
 
 	public void updatePosition(String position) {

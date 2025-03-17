@@ -9,12 +9,12 @@ import org.springframework.stereotype.Repository;
 import com.team09.sb01hrbank09.entity.Employee;
 
 @Repository
-public interface EmployeeRepository extends JpaRepository<Employee,Long> {
-	
+public interface EmployeeRepository extends JpaRepository<Employee, Long> {
+
 	Employee save(Employee employee);
 
 	Optional<Employee> findById(Long id);
-	
+
 	List<Employee> findAll();
 
 	void deleteById(Long id);

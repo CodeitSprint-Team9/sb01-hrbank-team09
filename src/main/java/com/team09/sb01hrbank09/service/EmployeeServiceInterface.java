@@ -2,30 +2,34 @@ package com.team09.sb01hrbank09.service;
 
 import java.time.Instant;
 
+import org.springframework.web.multipart.MultipartFile;
+
+import com.team09.sb01hrbank09.dto.entityDto.EmployeeDistributionDto;
 import com.team09.sb01hrbank09.dto.entityDto.EmployeeDto;
+import com.team09.sb01hrbank09.dto.entityDto.EmployeeTrendDto;
+import com.team09.sb01hrbank09.dto.request.EmployeeCreateRequest;
+import com.team09.sb01hrbank09.dto.request.EmployeeUpdateRequest;
 import com.team09.sb01hrbank09.dto.response.CursorPageResponseEmployeeDto;
-import com.team09.sb01hrbank09.entity.Department;
-import com.team09.sb01hrbank09.entity.Enum.EmployeeStatus;
-import com.team09.sb01hrbank09.entity.File;
+
 
 public interface EmployeeServiceInterface {
 
-	EmployeeDto creatEmployee(String name, String email, String employeeNumber, String position,
-		EmployeeStatus status, File file, Department department);
+	EmployeeDto creatEmployee(EmployeeCreateRequest employeeCreateRequest, MultipartFile profileImg);
 
 	EmployeeDto findEmployeeById(Long Id);
 
-	CursorPageResponseEmployeeDto findEmployeeList();
+	CursorPageResponseEmployeeDto findEmployeeList(String nameOrEmail, String employeeNumber,String departmentName,
+		String position,String hireDateFrom,String hireDateTo,String status,Long idAfter,String cursor,int size,String sortField,String sortDirection);
 
-	void deleteEmployee(Long id);
+	boolean deleteEmployee(Long id);
 
-	EmployeeDto updateEmployee(EmployeeDto employeeDto);
+	EmployeeDto updateEmployee(Long id, EmployeeUpdateRequest employeeUpdateRequest, MultipartFile profileImg);
 
 	//새로운Dto 직원수 추이
-	void getEmployeeTrend(Instant startedAt, Instant endedAt, String gap);
+	EmployeeTrendDto getEmployeeTrend(Instant startedAt, Instant endedAt, String gap);
 
 	//새로운Dto 직원 분포 조회
-	void getEmployeeDistributaion(String group, String status);
+	EmployeeDistributionDto getEmployeeDistributaion(String groupBy, String status);
 
 	//직원 수 조회
 	int countEmployee(String status, Instant startedAt, Instant endedAt);
