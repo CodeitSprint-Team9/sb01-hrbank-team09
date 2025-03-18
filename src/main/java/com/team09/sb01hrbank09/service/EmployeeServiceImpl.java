@@ -7,7 +7,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -77,13 +81,69 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 	public CursorPageResponseEmployeeDto findEmployeeList(String nameOrEmail, String employeeNumber,
 		String departmentName, String position, String hireDateFrom, String hireDateTo, String status, Long idAfter,
 		String cursor, int size, String sortField, String sortDirection) {
-		return null;
+
+		// if (sortDirection == null || (!sortDirection.equalsIgnoreCase("ASC") && !sortDirection.equalsIgnoreCase("DESC"))) {
+		// 	throw new IllegalArgumentException("유효하지 않은 정렬 방향입니다.");
+		// }
+		// if (sortField == null || (!sortField.equals("name") && !sortField.equals("hireDate"))) {
+		// 	throw new IllegalArgumentException("유효하지 않은 정렬 필드입니다.");
+		// }
+
+		Sort sort = Sort.by(Sort.Direction.fromString(sortDirection), sortField);
+		PageRequest pageRequest = PageRequest.of(0, size, sort);
+
+		String escapedSearchTerm = escapeSpecialCharacters(nameOrEmail);
+
+		List<Employee> employees;
+		long totalElements;
+		if (idAfter != null) {
+			employees = employeeRepository.findByIdGreaterThanAndFilters(
+				idAfter, escapedSearchTerm, employeeNumber, departmentName, position, Instant.parse(hireDateFrom),
+				Instant.parse(hireDateTo), EmployeeStatus.valueOf(status.toUpperCase()), pageRequest
+			);
+			totalElements = employeeRepository.countByIdGreaterThanAndFilters(
+				idAfter, escapedSearchTerm, employeeNumber, departmentName, position,
+				Instant.parse(hireDateFrom), Instant.parse(hireDateTo), EmployeeStatus.valueOf(status.toUpperCase())
+			);
+		} else {
+			employees = employeeRepository.findByFilters(
+				escapedSearchTerm, employeeNumber, departmentName, position, Instant.parse(hireDateFrom),
+				Instant.parse(hireDateTo), EmployeeStatus.valueOf(status.toUpperCase()), pageRequest
+			);
+			totalElements = employeeRepository.countByFilters(
+				escapedSearchTerm, employeeNumber, departmentName, position,
+				Instant.parse(hireDateFrom), Instant.parse(hireDateTo), EmployeeStatus.valueOf(status.toUpperCase())
+			);
+		}
+
+		List<EmployeeDto> employeeDtos = employees.stream()
+			.map(employeeMapper::employeeToDto)
+			.toList();
+
+		Long nextIdAfter = null;
+		String nextCursor = null;
+		boolean hasNext = false;
+		if (!employees.isEmpty()) {
+			nextIdAfter = employees.get(employees.size() - 1).getId();
+			nextCursor = String.valueOf(nextIdAfter);
+			if (idAfter != null) {
+				hasNext = employeeRepository.findFirstByIdGreaterThanAndNameContainingOrDescriptionContaining(
+					nextIdAfter, escapedSearchTerm, escapedSearchTerm, PageRequest.of(0, 1, sort)
+				).isPresent();
+			} else {
+				hasNext = employeeRepository.findFirstByNameContainingOrDescriptionContaining(
+					escapedSearchTerm, escapedSearchTerm, PageRequest.of(0, 1, sort)
+				).isPresent();
+			}
+		}
+
+		return new CursorPageResponseEmployeeDto(employeeDtos, nextCursor, nextIdAfter, size, totalElements, hasNext);
 	}
 
 	@Override
 	@Transactional(readOnly = true)
-	public List<EmployeeDto> getEmployeeAllList(){
-		List<Employee> find=employeeRepository.findAll();
+	public List<EmployeeDto> getEmployeeAllList() {
+		List<Employee> find = employeeRepository.findAll();
 		return find.stream()
 			.map(employeeMapper::employeeToDto)
 			.toList();
@@ -103,7 +163,8 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 
 	@Override
 	@Transactional
-	public EmployeeDto updateEmployee(Long id, EmployeeUpdateRequest employeeUpdateRequest, MultipartFile profileImg) throws
+	public EmployeeDto updateEmployee(Long id, EmployeeUpdateRequest employeeUpdateRequest,
+		MultipartFile profileImg) throws
 		IOException {
 
 		Employee employee = employeeRepository.findById(id)
@@ -173,7 +234,6 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 		}
 	}
 
-
 	@Override
 	@Transactional(readOnly = true)
 	public Long countEmployee(String status, Instant startedAt, Instant endedAt) {
@@ -198,7 +258,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 
 	private List<EmployeeDistributionDto> convertDistributionDepartment(String status) {
 		List<EmployeeDistributionDto> distribution = new ArrayList<>();
-		List<Object[]> results = employeeRepository.findDistributatinPosition(
+		List<Object[]> results = employeeRepository.findDistributatinDepartment(
 			EmployeeStatus.valueOf(status.toUpperCase()));
 		for (Object[] row : results) {
 			Long departmentId = (Long)row[0];
@@ -212,4 +272,12 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 		return distribution;
 	}
 
+	private String escapeSpecialCharacters(String searchTerm) {
+		if (searchTerm == null) {
+			return null;
+		}
+		Pattern specialCharacters = Pattern.compile("[\\(\\)\\[\\]\\{\\}\\^\\$\\.\\*\\+\\?\\|\\\\]");
+		Matcher matcher = specialCharacters.matcher(searchTerm);
+		return matcher.replaceAll("\\\\$0");
+	}
 }

@@ -49,6 +49,32 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 		"GROUP BY e.department.id")
 	List<Object[]> findDistributatinDepartment(@Param("status") EmployeeStatus status);
 
+	Optional<Employee> findFirstByIdGreaterThanAndNameContainingOrDescriptionContaining(
+		Long idAfter, String name, String description, Pageable pageable
+	);
 
+	Optional<Employee> findFirstByNameContainingOrDescriptionContaining(
+		String name, String description, Pageable pageable
+	);
+
+	List<Employee> findByIdGreaterThanAndFilters(
+		Long idAfter, String name, String employeeNumber, String departmentName, String position,
+		Instant hireDateFrom, Instant hireDateTo, EmployeeStatus status, Pageable pageable
+	);
+
+	long countByIdGreaterThanAndFilters(
+		Long idAfter, String name, String employeeNumber, String departmentName,
+		String position, Instant hireDateFrom, Instant hireDateTo, EmployeeStatus status
+	);
+
+	List<Employee> findByFilters(
+		String name, String employeeNumber, String departmentName, String position,
+		Instant hireDateFrom, Instant hireDateTo, EmployeeStatus status, Pageable pageable
+	);
+
+	long countByFilters(
+		String name, String employeeNumber, String departmentName, String position,
+		Instant hireDateFrom, Instant hireDateTo, EmployeeStatus status
+	);
 
 }

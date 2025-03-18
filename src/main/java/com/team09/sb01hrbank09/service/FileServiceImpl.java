@@ -30,7 +30,7 @@ public class FileServiceImpl implements FileServiceInterface {
 	private final EmployeeServiceInterface employeeServiceInterface;
 
 	@Override
-	@Transactional
+	@Transactional(readOnly = true)
 	public String downloadFile(Long id) throws IOException {
 		File file = fileRepository.findById(id)
 			.orElseThrow(() -> new NoSuchElementException("file with id " + id + " not found"));
@@ -57,7 +57,7 @@ public class FileServiceImpl implements FileServiceInterface {
 
 		try (BufferedWriter writer = Files.newBufferedWriter(filePath);
 			 CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT
-				 .withHeader("ID", "EmployeeNumber","Name", "Email",
+				 .withHeader("ID", "EmployeeNumber", "Name", "Email",
 					 "DepartmentName", "Position", "HireDate", "Status"))) {
 
 			for (EmployeeDto employee : data) {
