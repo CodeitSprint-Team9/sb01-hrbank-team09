@@ -30,7 +30,7 @@ public interface EmployeeServiceInterface {
 	List<EmployeeTrendDto> getEmployeeTrend(Instant startedAt, Instant endedAt, String gap);
 
 	//새로운Dto 직원 분포 조회
-	EmployeeDistributionDto getEmployeeDistributaion(String groupBy, String status);
+	List<EmployeeDistributionDto> getEmployeeDistributaion(String groupBy, String status);
 
 	//직원 수 조회
 	Long countEmployee(String status, Instant startedAt, Instant endedAt);

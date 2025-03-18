@@ -8,6 +8,7 @@ import java.util.NoSuchElementException;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.team09.sb01hrbank09.dto.entityDto.EmployeeDistributionDto;
@@ -23,7 +24,6 @@ import com.team09.sb01hrbank09.entity.File;
 import com.team09.sb01hrbank09.mapper.EmployeeMapper;
 import com.team09.sb01hrbank09.repository.EmployeeRepository;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -51,8 +51,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 		}
 
 		String uniquePart = UUID.randomUUID().toString().replaceAll("-", "").substring(0, 14);
-		String employeeNumber = "EMP-" + uniquePart;
-
+		String employeeNumber = "EMP-" + "년도" + uniquePart;
 		Employee employee = Employee.createEmployee(employeeCreateRequest.name(), employeeCreateRequest.email(),
 			employeeNumber, employeeCreateRequest.position(),
 			employeeCreateRequest.hireDate(), EmployeeStatus.ACTIVE, file, usingDepartment);
@@ -60,8 +59,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 		//만들어지면 넣기
 		//changeLogServiceInterface.createChangeLog(ChnageLogDto request);
 
-		employeeRepository.save(employee);
-		return employeeMapper.employeeToDto(employee);
+		return employeeMapper.employeeToDto(employeeRepository.save(employee));
 	}
 
 	@Override
@@ -95,6 +93,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 	@Override
 	@Transactional
 	public EmployeeDto updateEmployee(Long id, EmployeeUpdateRequest employeeUpdateRequest, MultipartFile profileImg) {
+
 		Employee employee = employeeRepository.findById(id)
 
 			.orElseThrow(() -> new NoSuchElementException("Message with id " + id + " not found"));
@@ -136,17 +135,11 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 		long previousCount = 0;
 
 		for (Object[] row : results) {
-			Instant date = ((Timestamp) row[0]).toInstant();
-			long count = ((Number) row[1]).longValue();
+			Instant date = ((Timestamp)row[0]).toInstant();
+			long count = ((Number)row[1]).longValue();
 
 			long change = count - previousCount;
-			double changeRate;
-			if(previousCount==0)
-				changeRate=0.0;
-			else{
-				changeRate=(change * 100.0 / previousCount);
-			}
-
+			double changeRate = (previousCount == 0) ? 0.0 : (change * 100.0 / previousCount);
 			trends.add(new EmployeeTrendDto(date, count, change, changeRate));
 			previousCount = count;
 		}
@@ -156,8 +149,16 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 
 	@Override
 	@Transactional
-	public EmployeeDistributionDto getEmployeeDistributaion(String groupBy, String status) {
-		return null;
+	public List<EmployeeDistributionDto> getEmployeeDistributaion(String groupBy, String status) {
+
+		List<EmployeeDistributionDto> distribution;
+		if (groupBy.equals("position")) {
+			return convertDistributionPosition(status);
+		} else if (groupBy.equals("department")) {
+			return convertDistributionDepartment(status);
+		} else {
+			return convertDistributionDepartment(status);
+		}
 	}
 
 	@Override
@@ -165,6 +166,37 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 	public Long countEmployee(String status, Instant startedAt, Instant endedAt) {
 		EmployeeStatus findStatus = EmployeeStatus.valueOf(status.toUpperCase());
 		return employeeRepository.countByStatusAndCreatedAtBetween(findStatus, startedAt, endedAt);
+	}
+
+	private List<EmployeeDistributionDto> convertDistributionPosition(String status) {
+		List<EmployeeDistributionDto> distribution = new ArrayList<>();
+		List<Object[]> results = employeeRepository.findDistributatinPosition(
+			EmployeeStatus.valueOf(status.toUpperCase()));
+		for (Object[] row : results) {
+			String positionName = (String)row[0];
+			Long totalEmployees = (Long)row[1];
+			Long activeEmployees = (Long)row[2];
+			double ratio = (activeEmployees == 0) ? 0.0 : ((double)totalEmployees * 100 / activeEmployees);
+			distribution.add(new EmployeeDistributionDto(positionName, totalEmployees,
+				ratio));
+		}
+		return distribution;
+	}
+
+	private List<EmployeeDistributionDto> convertDistributionDepartment(String status) {
+		List<EmployeeDistributionDto> distribution = new ArrayList<>();
+		List<Object[]> results = employeeRepository.findDistributatinPosition(
+			EmployeeStatus.valueOf(status.toUpperCase()));
+		for (Object[] row : results) {
+			Long departmentId = (Long)row[0];
+			Long totalEmployees = (Long)row[1];
+			Long activeEmployees = (Long)row[2];
+			double ratio = (activeEmployees == 0) ? 0.0 : ((double)totalEmployees * 100 / activeEmployees);
+			String departmentName = departmentServiceInterface.findDepartmentById(departmentId).name();
+			distribution.add(new EmployeeDistributionDto(departmentName, totalEmployees,
+				ratio));
+		}
+		return distribution;
 	}
 
 }

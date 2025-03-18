@@ -115,10 +115,10 @@ public class EmployeeController {
 	}
 
 	@GetMapping("/stats/distribution")
-	ResponseEntity<EmployeeDistributionDto> getEmployeeDistributaion(
+	ResponseEntity<List<EmployeeDistributionDto>> getEmployeeDistributaion(
 		@RequestParam(required = false, defaultValue = "department") String groupBy,
 		@RequestParam(required = false, defaultValue = "ACTIVE") String status) {
-		EmployeeDistributionDto response = employeeServiceInterface.getEmployeeDistributaion(groupBy, status);
+		List<EmployeeDistributionDto> response = employeeServiceInterface.getEmployeeDistributaion(groupBy, status);
 		return ResponseEntity.ok(response);
 	}
 

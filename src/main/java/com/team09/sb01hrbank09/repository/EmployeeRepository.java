@@ -37,6 +37,18 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 		@Param("endedAt") Instant endedAt,
 		@Param("gap") String gap);
 
+	@Query("SELECT e.position, COUNT(e), " +
+		"SUM(CASE WHEN e.status = :status THEN 1 ELSE 0 END) " +
+		"FROM Employee e " +
+		"GROUP BY e.position")
+	List<Object[]> findDistributatinPosition(@Param("status") EmployeeStatus status);
+
+	@Query("SELECT e.department.id, COUNT(e), " +
+		"SUM(CASE WHEN e.status = :status THEN 1 ELSE 0 END) " +
+		"FROM Employee e " +
+		"GROUP BY e.department.id")
+	List<Object[]> findDistributatinDepartment(@Param("status") EmployeeStatus status);
+
 
 
 }
