@@ -15,7 +15,7 @@ import com.team09.sb01hrbank09.dto.entityDto.DiffDto;
 import com.team09.sb01hrbank09.dto.request.CursorPageRequestChangeLog;
 import com.team09.sb01hrbank09.dto.response.CursorPageResponseChangeLogDto;
 import com.team09.sb01hrbank09.entity.Enum.ChangeLogType;
-import com.team09.sb01hrbank09.service.ChangeLogServiceInterface;
+import com.team09.sb01hrbank09.service.ChangeLogServiceImpl;
 
 import lombok.RequiredArgsConstructor;
 
@@ -24,7 +24,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ChangeLogController {
 
-	private final ChangeLogServiceInterface changeLogService;
+	private final ChangeLogServiceImpl changeLogService;
 
 	//직원 정보 수정 이력 목록 조회
 	@GetMapping("")
