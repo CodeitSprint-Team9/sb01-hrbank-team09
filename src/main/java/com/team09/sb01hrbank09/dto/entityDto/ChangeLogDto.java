@@ -8,7 +8,6 @@ public record ChangeLogDto(
 	Long id,
 	ChangeLogType type,
 	String employeeNumber,
-	String details,
 	String memo,
 	String ipAddress,
 	Instant at

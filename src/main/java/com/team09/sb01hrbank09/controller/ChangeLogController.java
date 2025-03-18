@@ -2,6 +2,7 @@ package com.team09.sb01hrbank09.controller;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -56,8 +57,8 @@ public class ChangeLogController {
 
 	//직원 정보 수정 이력 상세 조회
 	@GetMapping("/{id}/diffs")
-	public ResponseEntity<DiffDto> findChangeLogById(@PathVariable Long id) {
-		DiffDto response = changeLogService.findChangeLogById(id);
+	public ResponseEntity<List<DiffDto>> findChangeLogById(@PathVariable Long id) {
+		List<DiffDto> response = changeLogService.findChangeLogById(id);
 
 		return ResponseEntity.ok(response);
 	}
