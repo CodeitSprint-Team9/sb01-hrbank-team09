@@ -5,6 +5,7 @@ import com.team09.sb01hrbank09.dto.request.CursorPageRequestDepartment;
 import com.team09.sb01hrbank09.dto.request.DepartmentCreateRequest;
 import com.team09.sb01hrbank09.dto.request.DepartmentUpdateRequest;
 import com.team09.sb01hrbank09.dto.response.CursorPageResponseDepartmentDto;
+import com.team09.sb01hrbank09.entity.Department;
 
 public interface DepartmentServiceInterface {
 
@@ -19,5 +20,7 @@ public interface DepartmentServiceInterface {
 
 	//부서 상세 조회
 	DepartmentDto findDepartmentById(Long id);
+
+	Department findDepartmentEntityById(Long id);
 
 }
