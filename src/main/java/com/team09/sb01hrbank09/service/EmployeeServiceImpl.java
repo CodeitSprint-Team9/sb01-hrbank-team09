@@ -65,7 +65,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 	}
 
 	@Override
-	@Transactional
+	@Transactional(readOnly = true)
 	public EmployeeDto findEmployeeById(Long Id) {
 		Employee employee = employeeRepository.findById(Id)
 			.orElseThrow(() -> new NoSuchElementException("Message with id " + Id + " not found"));
@@ -73,7 +73,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 	}
 
 	@Override
-	@Transactional
+	@Transactional(readOnly = true)
 	public CursorPageResponseEmployeeDto findEmployeeList(String nameOrEmail, String employeeNumber,
 		String departmentName, String position, String hireDateFrom, String hireDateTo, String status, Long idAfter,
 		String cursor, int size, String sortField, String sortDirection) {
@@ -81,7 +81,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 	}
 
 	@Override
-	@Transactional
+	@Transactional(readOnly = true)
 	public List<EmployeeDto> getEmployeeAllList(){
 		List<Employee> find=employeeRepository.findAll();
 		return find.stream()
@@ -138,7 +138,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 	}
 
 	@Override
-	@Transactional
+	@Transactional(readOnly = true)
 	public List<EmployeeTrendDto> getEmployeeTrend(Instant startedAt, Instant endedAt, String gap) {
 
 		List<Object[]> results = employeeRepository.findEmployeeTrend(startedAt, endedAt, gap);
@@ -160,7 +160,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 	}
 
 	@Override
-	@Transactional
+	@Transactional(readOnly = true)
 	public List<EmployeeDistributionDto> getEmployeeDistributaion(String groupBy, String status) {
 
 		List<EmployeeDistributionDto> distribution;
@@ -175,7 +175,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 
 
 	@Override
-	@Transactional
+	@Transactional(readOnly = true)
 	public Long countEmployee(String status, Instant startedAt, Instant endedAt) {
 		EmployeeStatus findStatus = EmployeeStatus.valueOf(status.toUpperCase());
 		return employeeRepository.countByStatusAndCreatedAtBetween(findStatus, startedAt, endedAt);

@@ -13,6 +13,7 @@ import java.util.NoSuchElementException;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.team09.sb01hrbank09.dto.entityDto.EmployeeDto;
@@ -29,6 +30,7 @@ public class FileServiceImpl implements FileServiceInterface {
 	private final EmployeeServiceInterface employeeServiceInterface;
 
 	@Override
+	@Transactional
 	public String downloadFile(Long id) throws IOException {
 		File file = fileRepository.findById(id)
 			.orElseThrow(() -> new NoSuchElementException("file with id " + id + " not found"));
@@ -43,6 +45,7 @@ public class FileServiceImpl implements FileServiceInterface {
 	}
 
 	@Override
+	@Transactional
 	public File createCsvBackupFile() throws IOException {
 		List<EmployeeDto> data = employeeServiceInterface.getEmployeeAllList();
 
@@ -80,6 +83,7 @@ public class FileServiceImpl implements FileServiceInterface {
 	}
 
 	@Override
+	@Transactional
 	public File createImgFile(MultipartFile file) throws IOException {
 
 		File entityFile = File.createImgFile(file.getName(), file.getContentType(), file.getSize());
@@ -93,6 +97,7 @@ public class FileServiceImpl implements FileServiceInterface {
 	}
 
 	@Override
+	@Transactional
 	public boolean deleteFile(File file) {
 		if (fileRepository.existsById(file.getId())) {
 			fileRepository.delete(file);
