@@ -1,5 +1,6 @@
 package com.team09.sb01hrbank09.service;
 
+import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -38,7 +39,8 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 
 	@Override
 	@Transactional
-	public EmployeeDto creatEmployee(EmployeeCreateRequest employeeCreateRequest, MultipartFile profileImg) {
+	public EmployeeDto creatEmployee(EmployeeCreateRequest employeeCreateRequest, MultipartFile profileImg) throws
+		IOException {
 		Department usingDepartment = departmentServiceInterface.findDepartmentEntityById(
 			employeeCreateRequest.departmentId());
 		if (usingDepartment == null) {
@@ -47,7 +49,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 
 		File file = null;
 		if (profileImg != null) {
-			file = fileServiceInterface.createFile(profileImg);
+			file = fileServiceInterface.createImgFile(profileImg);
 		}
 
 		String uniquePart = UUID.randomUUID().toString().replaceAll("-", "").substring(0, 14);
@@ -80,6 +82,15 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 
 	@Override
 	@Transactional
+	public List<EmployeeDto> getEmployeeAllList(){
+		List<Employee> find=employeeRepository.findAll();
+		return find.stream()
+			.map(employeeMapper::employeeToDto)
+			.toList();
+	}
+
+	@Override
+	@Transactional
 	public boolean deleteEmployee(Long id) {
 		if (employeeRepository.existsById(id)) {
 			Employee employee = employeeRepository.findById(id).get();
@@ -92,7 +103,8 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 
 	@Override
 	@Transactional
-	public EmployeeDto updateEmployee(Long id, EmployeeUpdateRequest employeeUpdateRequest, MultipartFile profileImg) {
+	public EmployeeDto updateEmployee(Long id, EmployeeUpdateRequest employeeUpdateRequest, MultipartFile profileImg) throws
+		IOException {
 
 		Employee employee = employeeRepository.findById(id)
 
@@ -115,7 +127,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 
 		if (profileImg != null) {
 			fileServiceInterface.deleteFile(employee.getFile());
-			file = fileServiceInterface.createFile(profileImg);
+			file = fileServiceInterface.createImgFile(profileImg);
 			employee.updateFile(file);
 		}
 
@@ -161,7 +173,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 		}
 	}
 
-	
+
 	@Override
 	@Transactional
 	public Long countEmployee(String status, Instant startedAt, Instant endedAt) {

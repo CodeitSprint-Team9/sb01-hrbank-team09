@@ -1,5 +1,7 @@
 package com.team09.sb01hrbank09.controller;
 
+import java.io.IOException;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,7 +20,7 @@ public class FileController {
 	private final FileServiceInterface fileServiceInterface;
 
 	@GetMapping("{/id}/download")
-	ResponseEntity<String> downloadFile(@PathVariable Long id) {
+	ResponseEntity<String> downloadFile(@PathVariable Long id) throws IOException {
 		String response = fileServiceInterface.downloadFile(id);
 		return ResponseEntity.ok(response);
 	}
