@@ -16,11 +16,14 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "employees")
 @Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Employee {
 
 	@Id
@@ -54,8 +57,6 @@ public class Employee {
 	@JoinColumn(name = "dept_id")
 	private Department department;
 
-	protected Employee() {
-	}
 
 	private Employee(String name, String email, String employeeNumber, String position
 		, Instant hireDateFrom, EmployeeStatus status, File file, Department department) {
@@ -101,4 +102,5 @@ public class Employee {
 	public void updateDepartment(Department department) {
 		this.department = department;
 	}
+
 }

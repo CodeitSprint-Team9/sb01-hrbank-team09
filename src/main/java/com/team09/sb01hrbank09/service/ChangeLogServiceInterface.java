@@ -6,6 +6,7 @@ import com.team09.sb01hrbank09.dto.entityDto.ChangeLogDto;
 import com.team09.sb01hrbank09.dto.entityDto.DiffDto;
 import com.team09.sb01hrbank09.dto.request.CursorPageRequestChangeLog;
 import com.team09.sb01hrbank09.dto.response.CursorPageResponseChangeLogDto;
+import com.team09.sb01hrbank09.entity.ChangeLog;
 
 public interface ChangeLogServiceInterface {
 
