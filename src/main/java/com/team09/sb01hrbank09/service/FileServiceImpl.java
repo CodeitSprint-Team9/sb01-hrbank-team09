@@ -57,10 +57,14 @@ public class FileServiceImpl implements FileServiceInterface {
 
 		try (BufferedWriter writer = Files.newBufferedWriter(filePath);
 			 CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT
-				 .withHeader("ID", "EmployeeNumber", "Name", "Email",
-					 "DepartmentName", "Position", "HireDate", "Status"))) {
+				 .withHeader("ID", "EmployeeNumber", "Name", "Email", "DepartmentName",
+					 "Position", "HireDate", "Status"))) {
+
+			int batchSize = 1000;
+			int count = 0;
 
 			for (EmployeeDto employee : data) {
+
 				csvPrinter.printRecord(
 					employee.id(),
 					employee.employeeNumber(),
@@ -71,7 +75,16 @@ public class FileServiceImpl implements FileServiceInterface {
 					employee.hireDate(),
 					employee.status()
 				);
+
+				count++;
+
+
+				if (count % batchSize == 0) {
+					csvPrinter.flush();
+				}
 			}
+
+
 			csvPrinter.flush();
 		}
 
@@ -100,6 +113,15 @@ public class FileServiceImpl implements FileServiceInterface {
 	@Transactional
 	public boolean deleteFile(File file) {
 		if (fileRepository.existsById(file.getId())) {
+			Path path=file.getFilePath();
+			try {
+				if (Files.exists(path)) {
+					Files.delete(path);
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+				return false;
+			}
 			fileRepository.delete(file);
 			return true;
 		}
