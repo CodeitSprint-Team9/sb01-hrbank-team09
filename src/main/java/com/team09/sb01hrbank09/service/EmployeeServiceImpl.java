@@ -85,22 +85,22 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 			employeeNumber, employeeCreateRequest.position(),
 			employeeCreateRequest.hireDate(), EmployeeStatus.ACTIVE, file, usingDepartment);
 
-		EmployeeDto newEmployee=employeeMapper.employeeToDto(employee);
+		EmployeeDto newEmployee = employeeMapper.employeeToDto(employee);
 		//만들어지면 넣기
-		// updateTime = Instant.now();
-		// String memo;
-		// if (employeeCreateRequest.memo() == null) {
-		// 	memo = "신규 직원 등록";
-		// } else {
-		// 	memo = employeeCreateRequest.memo();
-		// }
-		// log.info("이벤트 발행시작...");
-		// //이벤트 발행 (before = null, after = 새 Employee)
-		// eventPublisher.publishEvent(new EmployeeEvent(
-		// 	ChangeLogType.CREATED, employee.getEmployeeNumber(), memo, "127.0.0.1", null,
-		// 	employeeMapper.employeeToDto(employee)
-		// ));
-		// log.info("change-logs 생성 완료");
+		updateTime = Instant.now();
+		String memo;
+		if (employeeCreateRequest.memo() == null) {
+			memo = "신규 직원 등록";
+		} else {
+			memo = employeeCreateRequest.memo();
+		}
+		log.info("이벤트 발행시작...");
+		//이벤트 발행 (before = null, after = 새 Employee)
+		eventPublisher.publishEvent(new EmployeeEvent(
+			ChangeLogType.CREATED, employee.getEmployeeNumber(), memo, ipAddress, null,
+			employeeMapper.employeeToDto(employee)
+		));
+		log.info("change-logs 생성 완료");
 
 		return employeeMapper.employeeToDto(employeeRepository.save(employee));
 	}
@@ -161,7 +161,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 
 		Employee employee = employeeRepository.findById(id)
 			.orElseThrow(() -> new NoSuchElementException("Message with id " + id + " not found"));
-		EmployeeDto newEmployee=employeeMapper.employeeToDto(employee);
+		EmployeeDto newEmployee = employeeMapper.employeeToDto(employee);
 		File file = null;
 
 		// 변경 전 상태 저장 (깊은 복사)
@@ -186,7 +186,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 			file = fileServiceInterface.createImgFile(profileImg);
 			employee.updateFile(file);
 		}
-		EmployeeDto oldEmployee=employeeMapper.employeeToDto(employee);
+		EmployeeDto oldEmployee = employeeMapper.employeeToDto(employee);
 		//만들어지면 넣기
 		//changeLogServiceInterface.createChangeLog();
 
