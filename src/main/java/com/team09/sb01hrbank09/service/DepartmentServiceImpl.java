@@ -125,7 +125,7 @@ public class DepartmentServiceImpl implements DepartmentServiceInterface{
         //return new CursorPageResponseDepartmentDto(departmentDtos, nextCursor, nextIdAfter, request.size(), totalElements, hasNext);
         return null;
     }
-    
+
     private String escapeSpecialCharacters(String searchTerm) {
         if (searchTerm == null) {
             return null;

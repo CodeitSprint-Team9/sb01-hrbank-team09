@@ -2,7 +2,9 @@ package com.team09.sb01hrbank09.controller;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.List;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -47,6 +49,7 @@ public class EmployeeController {
 		if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
 			ipAddress = request.getRemoteAddr();
 		}
+		System.out.println(ipAddress);
 		EmployeeDto response = employeeServiceInterface.creatEmployee(employeeCreateRequest, profileImage, ipAddress);
 
 		return ResponseEntity.ok(response);
@@ -67,6 +70,17 @@ public class EmployeeController {
 		@RequestParam(defaultValue = "name") String sortField,
 		@RequestParam(defaultValue = "asc") String sortDirection
 	) {
+		LocalDateTime parsedHireDateFrom = null;
+		LocalDateTime parsedHireDateTo = null;
+		if (hireDateFrom != null) {
+			parsedHireDateFrom = LocalDateTime.parse(hireDateFrom);
+		}
+		if (hireDateTo != null) {
+			parsedHireDateTo = LocalDateTime.parse(hireDateTo);
+		}
+
+		// status 필드 검증
+		List<String> validStatuses = Arrays.asList("ACTIVE", "ON_LEAVE", "RESIGNED");
 		CursorPageResponseEmployeeDto response = employeeServiceInterface.findEmployeeList(
 			nameOrEmail, employeeNumber, departmentName, position,
 			hireDateFrom, hireDateTo, status, idAfter, cursor,
@@ -141,7 +155,7 @@ public class EmployeeController {
 
 	@GetMapping("/count")
 	public ResponseEntity<Long> getEmployeeCount(
-		@RequestParam(required = false, defaultValue = "ALL") String status,
+		@RequestParam(required = false, defaultValue = "ALL") String status,//all에대한 예외 필요
 		@RequestParam(required = false) Instant fromDate,
 		@RequestParam(required = false) Instant toDate) {
 
