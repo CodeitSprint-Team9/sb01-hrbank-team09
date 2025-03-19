@@ -41,7 +41,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 	private final ChangeLogServiceInterface changeLogServiceInterface;
 	private final EmployeeMapper employeeMapper;
 
-	private Instant updateTime = null;
+	private Instant updateTime = Instant.EPOCH;
 
 	@Override
 	@Transactional
@@ -65,6 +65,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 			employeeNumber, employeeCreateRequest.position(),
 			employeeCreateRequest.hireDate(), EmployeeStatus.ACTIVE, file, usingDepartment);
 
+		EmployeeDto newEmployee=employeeMapper.employeeToDto(employee);
 		//만들어지면 넣기
 		//changeLogServiceInterface.createChangeLog(oldEmployee,newEmployee,ipAdress);
 
@@ -157,9 +158,12 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 	@Transactional
 	public boolean deleteEmployee(Long id, String ipAddress) {
 		if (employeeRepository.existsById(id)) {
+
 			Employee employee = employeeRepository.findById(id).get();
+			EmployeeDto newEmployee=employeeMapper.employeeToDto(employee);
 			fileServiceInterface.deleteFile(employee.getFile());
 			employeeRepository.deleteById(id);
+			//로그작업
 			updateTime = Instant.now();
 			return true;
 		}
@@ -173,8 +177,8 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 		IOException {
 
 		Employee employee = employeeRepository.findById(id)
-
 			.orElseThrow(() -> new NoSuchElementException("Message with id " + id + " not found"));
+		EmployeeDto newEmployee=employeeMapper.employeeToDto(employee);
 		File file = null;
 
 		Department usingDepartment = departmentServiceInterface.findDepartmentEntityById(
@@ -196,9 +200,9 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 			file = fileServiceInterface.createImgFile(profileImg);
 			employee.updateFile(file);
 		}
-
+		EmployeeDto oldEmployee=employeeMapper.employeeToDto(employee);
 		//만들어지면 넣기
-		//changeLogServiceInterface.createChangeLog(ChnageLogDto request,EmployeeDto old, EmployeeDto new);
+		//changeLogServiceInterface.createChangeLog();
 		updateTime = Instant.now();
 		return employeeMapper.employeeToDto(employee);
 	}
