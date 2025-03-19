@@ -9,6 +9,7 @@ import com.team09.sb01hrbank09.entity.Employee;
 @Mapper(componentModel = "spring")
 public interface EmployeeMapper {
 	@Mapping(source = "department.id", target = "departmentId")
+	@Mapping(source = "department.name", target = "departmentName")
 	@Mapping(source = "file.id", target = "profileImageId")
 	EmployeeDto employeeToDto(Employee employee);
 

@@ -1,15 +1,20 @@
 package com.team09.sb01hrbank09.service;
 
+import java.io.IOException;
+
 import org.springframework.web.multipart.MultipartFile;
 
-import com.team09.sb01hrbank09.dto.entityDto.FileDto;
 import com.team09.sb01hrbank09.entity.File;
 
 public interface FileServiceInterface {
 
-	String downloadFile(Long id);
+	String downloadFile(Long id) throws IOException;
 
-	File createFile(MultipartFile file);
+	File createCsvBackupFile() throws IOException;
+
+	File createImgFile(MultipartFile file) throws IOException;
 
 	boolean deleteFile(File file);
+
+	//String makeFileBackupError();
 }

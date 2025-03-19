@@ -1,5 +1,6 @@
 package com.team09.sb01hrbank09.service;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
 
@@ -12,19 +13,25 @@ import com.team09.sb01hrbank09.dto.request.EmployeeCreateRequest;
 import com.team09.sb01hrbank09.dto.request.EmployeeUpdateRequest;
 import com.team09.sb01hrbank09.dto.response.CursorPageResponseEmployeeDto;
 
-
 public interface EmployeeServiceInterface {
 
-	EmployeeDto creatEmployee(EmployeeCreateRequest employeeCreateRequest, MultipartFile profileImg);
+	EmployeeDto creatEmployee(EmployeeCreateRequest employeeCreateRequest, MultipartFile profileImg, String ipAdress
+	) throws IOException;
 
 	EmployeeDto findEmployeeById(Long Id);
 
-	CursorPageResponseEmployeeDto findEmployeeList(String nameOrEmail, String employeeNumber,String departmentName,
-		String position,String hireDateFrom,String hireDateTo,String status,Long idAfter,String cursor,int size,String sortField,String sortDirection);
+	List<EmployeeDto> getEmployeeAllList();
 
-	boolean deleteEmployee(Long id);
+	CursorPageResponseEmployeeDto findEmployeeList(String nameOrEmail, String employeeNumber, String departmentName,
+		String position, String hireDateFrom, String hireDateTo, String status, Long idAfter, String cursor, int size,
+		String sortField, String sortDirection);
 
-	EmployeeDto updateEmployee(Long id, EmployeeUpdateRequest employeeUpdateRequest, MultipartFile profileImg);
+	boolean deleteEmployee(Long id, String ipAdress);
+
+	EmployeeDto updateEmployee(Long id, EmployeeUpdateRequest employeeUpdateRequest, MultipartFile profileImg,
+		String ipAdress
+	) throws
+		IOException;
 
 	//새로운Dto 직원수 추이
 	List<EmployeeTrendDto> getEmployeeTrend(Instant startedAt, Instant endedAt, String gap);
@@ -35,4 +42,5 @@ public interface EmployeeServiceInterface {
 	//직원 수 조회
 	Long countEmployee(String status, Instant startedAt, Instant endedAt);
 
+	Instant getUpdateTime();
 }

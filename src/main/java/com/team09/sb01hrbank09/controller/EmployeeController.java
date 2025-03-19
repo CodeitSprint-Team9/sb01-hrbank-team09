@@ -1,8 +1,11 @@
 package com.team09.sb01hrbank09.controller;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,9 +40,14 @@ public class EmployeeController {
 	@PostMapping
 	public ResponseEntity<EmployeeDto> creatEmployee(
 		@RequestPart("employeeCreateRequest") EmployeeCreateRequest employeeCreateRequest,
-		@RequestPart(value = "profile", required = false) MultipartFile profileImage
-	) {
-		EmployeeDto response = employeeServiceInterface.creatEmployee(employeeCreateRequest, profileImage);
+		@RequestPart(value = "profile", required = false) MultipartFile profileImage,
+		HttpServletRequest request
+	) throws IOException {
+		String ipAddress = request.getHeader("X-Forwarded-For");
+		if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
+			ipAddress = request.getRemoteAddr();
+		}
+		EmployeeDto response = employeeServiceInterface.creatEmployee(employeeCreateRequest, profileImage, ipAddress);
 
 		return ResponseEntity.ok(response);
 	}
@@ -75,8 +83,12 @@ public class EmployeeController {
 	}
 
 	@DeleteMapping("/{id}")
-	ResponseEntity<EmployeeDto> deleteEmployee(@PathVariable Long id) {
-		boolean deleted = employeeServiceInterface.deleteEmployee(id);
+	ResponseEntity<EmployeeDto> deleteEmployee(@PathVariable Long id, HttpServletRequest request) {
+		String ipAddress = request.getHeader("X-Forwarded-For");
+		if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
+			ipAddress = request.getRemoteAddr();
+		}
+		boolean deleted = employeeServiceInterface.deleteEmployee(id, ipAddress);
 		if (deleted) {
 			return ResponseEntity.noContent().build();
 		} else {
@@ -87,9 +99,14 @@ public class EmployeeController {
 	@PatchMapping("/{id}")
 	ResponseEntity<EmployeeDto> updateEmployee(@PathVariable Long id,
 		@RequestPart("employeeUpdateRequest") EmployeeUpdateRequest employeeUpdateRequest,
-		@RequestPart(value = "profile", required = false) MultipartFile profileImage) {
-
-		EmployeeDto response = employeeServiceInterface.updateEmployee(id, employeeUpdateRequest, profileImage);
+		@RequestPart(value = "profile", required = false) MultipartFile profileImage,
+		HttpServletRequest request) throws IOException {
+		String ipAddress = request.getHeader("X-Forwarded-For");
+		if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
+			ipAddress = request.getRemoteAddr();
+		}
+		EmployeeDto response = employeeServiceInterface.updateEmployee(id, employeeUpdateRequest, profileImage,
+			ipAddress);
 
 		return ResponseEntity.ok(response);
 	}

@@ -4,7 +4,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -27,7 +26,6 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 
 	Long countByStatusAndCreatedAtBetween(EmployeeStatus status, Instant start, Instant end);
 
-
 	@Query("SELECT FUNCTION('DATE_FORMAT', e.hireDateFrom, :gap) AS date, COUNT(e) AS count " +
 		"FROM Employee e " +
 		"WHERE e.hireDateFrom BETWEEN :startedAt AND :endedAt " +
@@ -49,7 +47,33 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 		"GROUP BY e.department.id")
 	List<Object[]> findDistributatinDepartment(@Param("status") EmployeeStatus status);
 
+	Optional<Employee> findFirstByIdGreaterThanAndNameContainingOrDescriptionContaining(
+		Long idAfter, String name, String description, Pageable pageable
+	);
 
+	Optional<Employee> findFirstByNameContainingOrDescriptionContaining(
+		String name, String description, Pageable pageable
+	);
+
+	List<Employee> findByIdGreaterThanAndFilters(
+		Long idAfter, String name, String employeeNumber, String departmentName, String position,
+		Instant hireDateFrom, Instant hireDateTo, EmployeeStatus status, Pageable pageable
+	);
+
+	long countByIdGreaterThanAndFilters(
+		Long idAfter, String name, String employeeNumber, String departmentName,
+		String position, Instant hireDateFrom, Instant hireDateTo, EmployeeStatus status
+	);
+
+	List<Employee> findByFilters(
+		String name, String employeeNumber, String departmentName, String position,
+		Instant hireDateFrom, Instant hireDateTo, EmployeeStatus status, Pageable pageable
+	);
+
+	long countByFilters(
+		String name, String employeeNumber, String departmentName, String position,
+		Instant hireDateFrom, Instant hireDateTo, EmployeeStatus status
+	);
 
 
 	Employee findByEmployeeNumber(String employeeNumber);

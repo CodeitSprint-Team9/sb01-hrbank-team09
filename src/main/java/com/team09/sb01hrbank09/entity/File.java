@@ -2,7 +2,6 @@ package com.team09.sb01hrbank09.entity;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Instant;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -34,26 +33,32 @@ public class File {
 	private String path;
 
 	private File(String name, String type, Long size, String typePath) {
-		this.path = Paths.get(System.getProperty("user.dir"), "files", typePath).toString();
+		this.path = typePath;
 		this.type = type;
 		this.size = size;
 		this.name = name;
 	}
 
 	@PostPersist
-	public void setFileNameAfterPersist() {
+	private void setFileNameAfterPersist() {
 		if (this.id != null && !this.name.startsWith("id_")) {
 			this.name = "id_" + this.id + "_" + this.name;
 		}
 	}
 
 	public static File createImgFile(String name, String type, Long size) {
-		return new File(name, type, size, "img");
+		String pathImg = Paths.get(System.getProperty("user.dir"), "files", "img", name).toString();
+		return new File(name, type, size, pathImg);
 	}
 
-	public static File createCsvFile(String type, Long size) {
-		String date = Instant.now().toString();
-		return new File("employee_backup_" + date + ".csv", type, size, "csv");
+	public static File createCsvFile(String filename, String type, Long size, Path path) {
+		String convertPath = path.toString();
+		return new File(filename, type, size, convertPath);
+	}
+
+	public static File createErrorFile(String filename, Long size, Path path) {
+		String convertPath = path.toString();
+		return new File(filename, ".loge", size, convertPath);
 	}
 
 	public void updateFileName(String updateName) {
