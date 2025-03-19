@@ -28,7 +28,7 @@ public class BackupContoller {
 	private final BackupMapper backupMapper;
 
 	@PostMapping
-	public ResponseEntity<BackupDto> createBackup(@RequestBody HttpServletRequest request) {
+	public ResponseEntity<BackupDto> createBackup(HttpServletRequest request) {
 		String ipAddress = request.getHeader("X-Forwarded-For");
 		if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
 			ipAddress = request.getRemoteAddr();

@@ -3,16 +3,26 @@ package com.team09.sb01hrbank09.service;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -119,7 +129,67 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 		String departmentName, String position, String hireDateFrom, String hireDateTo, String status, Long idAfter,
 		String cursor, int size, String sortField, String sortDirection) {
 
-		return null;
+		// 날짜를 Instant로 변환
+		Instant hireDateFromInstant = hireDateFrom != null ? Instant.parse(hireDateFrom) : null;
+		Instant hireDateToInstant = hireDateTo != null ? Instant.parse(hireDateTo) : null;
+
+		// 정렬 필드와 방향을 설정
+		Sort.Order sortOrder = sortDirection.equalsIgnoreCase("desc") ? Sort.Order.desc(sortField) : Sort.Order.asc(sortField);
+		Sort sort = Sort.by(sortOrder);
+
+		// 커서 기반 페이지네이션을 위한 Pageable 객체 생성
+		Pageable pageable = PageRequest.of(cursor != null ? Integer.parseInt(cursor) : 0, size, sort);
+
+		// 필터를 적용한 직원 리스트 조회
+		LocalDateTime hireDateFromTimestamp = hireDateFromInstant != null ? LocalDateTime.from(hireDateFromInstant) : null;
+		LocalDateTime hireDateToTimestamp = hireDateToInstant != null ? LocalDateTime.from(hireDateToInstant) : null;
+
+		// 직원 목록을 필터링하여 조회 (필터 및 페이징 처리)
+		Page<Employee> employeePage = employeeRepository.findEmployeesWithFilters(
+			nameOrEmail, employeeNumber, departmentName, position,
+			hireDateFromTimestamp, hireDateToTimestamp,
+			status, idAfter, pageable
+		);
+
+		// 페이지네이션 처리된 직원 목록을 DTO로 변환
+		List<EmployeeDto> employeeDtos = employeePage.getContent().stream()
+			.map(employee -> new EmployeeDto(
+				employee.getId(),
+				employee.getName(),
+				employee.getEmail(),
+				employee.getEmployeeNumber(),
+				employee.getDepartment().getId(),
+				employee.getDepartment().getName(),
+				employee.getPosition(),
+				employee.getHireDateFrom(),
+				employee.getStatus().toString(),
+				Optional.ofNullable(employee.getFile()).map(file -> file.getId()).orElse(null)
+			))
+			.collect(Collectors.toList());
+
+		// 커서 기반 페이지네이션을 위한 커서값 계산
+		String nextCursor = null;
+		Long nextIdAfter = null;
+		boolean hasNext = employeePage.hasNext();
+
+		// 다음 페이지 커서값 및 nextIdAfter 값 설정
+		if (hasNext) {
+			nextCursor = String.valueOf(employeePage.getNumber() + 1); // 다음 페이지의 커서값
+			nextIdAfter = employeePage.getContent().get(employeePage.getContent().size() - 1).getId();
+		}
+
+		// 전체 직원 수 설정
+		Long totalElements = employeePage.getTotalElements();
+
+		// 결과를 CursorPageResponseEmployeeDto로 반환
+		return new CursorPageResponseEmployeeDto(
+			employeeDtos,
+			nextCursor,
+			nextIdAfter,
+			size,
+			totalElements,
+			hasNext
+		);
 	}
 
 	@Override
@@ -250,7 +320,15 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 	@Override
 	@Transactional(readOnly = true)
 	public Long countEmployee(String status, Instant startedAt, Instant endedAt) {
-		EmployeeStatus findStatus = EmployeeStatus.valueOf(status.toUpperCase());
+		boolean isValidStatus = Arrays.stream(EmployeeStatus.values())
+			.anyMatch(e -> e.name().equalsIgnoreCase(status));
+		EmployeeStatus findStatus=null;
+		if (!isValidStatus) {
+			findStatus=EmployeeStatus.ACTIVE;
+		}
+
+		else
+			findStatus = EmployeeStatus.valueOf(status.toUpperCase());
 		return employeeRepository.countByStatusAndHireDateFromBetween(findStatus, startedAt, endedAt);
 	}
 
