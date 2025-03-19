@@ -13,21 +13,24 @@ import com.team09.sb01hrbank09.dto.request.EmployeeCreateRequest;
 import com.team09.sb01hrbank09.dto.request.EmployeeUpdateRequest;
 import com.team09.sb01hrbank09.dto.response.CursorPageResponseEmployeeDto;
 
-
 public interface EmployeeServiceInterface {
 
-	EmployeeDto creatEmployee(EmployeeCreateRequest employeeCreateRequest, MultipartFile profileImg) throws IOException;
+	EmployeeDto creatEmployee(EmployeeCreateRequest employeeCreateRequest, MultipartFile profileImg, String ipAdress
+	) throws IOException;
 
 	EmployeeDto findEmployeeById(Long Id);
 
 	List<EmployeeDto> getEmployeeAllList();
 
-	CursorPageResponseEmployeeDto findEmployeeList(String nameOrEmail, String employeeNumber,String departmentName,
-		String position,String hireDateFrom,String hireDateTo,String status,Long idAfter,String cursor,int size,String sortField,String sortDirection);
+	CursorPageResponseEmployeeDto findEmployeeList(String nameOrEmail, String employeeNumber, String departmentName,
+		String position, String hireDateFrom, String hireDateTo, String status, Long idAfter, String cursor, int size,
+		String sortField, String sortDirection);
 
-	boolean deleteEmployee(Long id);
+	boolean deleteEmployee(Long id, String ipAdress);
 
-	EmployeeDto updateEmployee(Long id, EmployeeUpdateRequest employeeUpdateRequest, MultipartFile profileImg) throws
+	EmployeeDto updateEmployee(Long id, EmployeeUpdateRequest employeeUpdateRequest, MultipartFile profileImg,
+		String ipAdress
+	) throws
 		IOException;
 
 	//새로운Dto 직원수 추이

@@ -45,7 +45,8 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 
 	@Override
 	@Transactional
-	public EmployeeDto creatEmployee(EmployeeCreateRequest employeeCreateRequest, MultipartFile profileImg) throws
+	public EmployeeDto creatEmployee(EmployeeCreateRequest employeeCreateRequest, MultipartFile profileImg,
+		String ipAddress) throws
 		IOException {
 		Department usingDepartment = departmentServiceInterface.findDepartmentEntityById(
 			employeeCreateRequest.departmentId());
@@ -65,7 +66,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 			employeeCreateRequest.hireDate(), EmployeeStatus.ACTIVE, file, usingDepartment);
 
 		//만들어지면 넣기
-		//changeLogServiceInterface.createChangeLog(ChnageLogDto request);
+		//changeLogServiceInterface.createChangeLog(oldEmployee,newEmployee,ipAdress);
 
 		updateTime = Instant.now();
 		return employeeMapper.employeeToDto(employeeRepository.save(employee));
@@ -154,7 +155,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 
 	@Override
 	@Transactional
-	public boolean deleteEmployee(Long id) {
+	public boolean deleteEmployee(Long id, String ipAddress) {
 		if (employeeRepository.existsById(id)) {
 			Employee employee = employeeRepository.findById(id).get();
 			fileServiceInterface.deleteFile(employee.getFile());
@@ -168,7 +169,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 	@Override
 	@Transactional
 	public EmployeeDto updateEmployee(Long id, EmployeeUpdateRequest employeeUpdateRequest,
-		MultipartFile profileImg) throws
+		MultipartFile profileImg, String ipAddress) throws
 		IOException {
 
 		Employee employee = employeeRepository.findById(id)
