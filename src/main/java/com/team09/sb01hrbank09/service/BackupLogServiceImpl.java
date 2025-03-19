@@ -1,5 +1,6 @@
 package com.team09.sb01hrbank09.service;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
 
@@ -12,9 +13,9 @@ import com.team09.sb01hrbank09.dto.request.CursorPageRequestBackupDto;
 import com.team09.sb01hrbank09.dto.response.CursorPageResponseBackupDto;
 import com.team09.sb01hrbank09.entity.Backup;
 import com.team09.sb01hrbank09.entity.Enum.BackupStatus;
+import com.team09.sb01hrbank09.entity.File;
 import com.team09.sb01hrbank09.mapper.BackupMapper;
 import com.team09.sb01hrbank09.repository.BackupRepository;
-import com.team09.sb01hrbank09.repository.EmployeeRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -24,8 +25,8 @@ public class BackupLogServiceImpl implements BackupLogServiceInterface {
 
 	private final BackupRepository backupRepository;
 	private final BackupMapper backupMapper;
-	private final EmployeeRepository employeeRepository;
-	//private final FileServiceInterface fileService; // Todo: 합칠 때 fileService 와 연동
+	private final EmployeeServiceInterface employeeService;
+	private final FileServiceInterface fileService;
 
 	@Override
 	@Transactional
@@ -38,34 +39,24 @@ public class BackupLogServiceImpl implements BackupLogServiceInterface {
 			lastBackupTime = latestCompletedBackup.getStartedAt();
 		}
 
-		/* Todo: EmployeeRepository 메소드 추가
-			@Query("SELECT MAX(e.updatedAt) FROM Employee AS e")
-			Instant findLatestModifiedAt();
-		*/
-		Instant lastEmployeeUpdate = employeeRepository.findLatestModifiedAt();
-
-		if (!lastEmployeeUpdate.isAfter(lastBackupTime)) {
-			Backup skippedBackup = Backup.createBackup(worker);
-			skippedBackup.setStatusSkipped();
-			backupRepository.save(skippedBackup);
-
-			return backupMapper.backupToDto(skippedBackup);
-		}
+		Instant lastEmployeeUpdate = employeeService.getUpdateTime();
 
 		Backup backup = Backup.createBackup(worker);
+		if (lastEmployeeUpdate == null || lastEmployeeUpdate.isAfter(lastBackupTime)) {
 
-		/* Todo: 합칠 때 fileService 와 연동
-			 try {
-
-				File backupFile = fileService.createEmployeeCsvBackup();
+			try {
+				File backupFile = fileService.createCsvBackupFile();
 				backup.setStatusCompleted(backupFile);
-			 } catch (Exception e) {
+			} catch (IOException e) {
+				throw new RuntimeException("백업 파일 및 로그 파일 생성 실패");
+			}
 
-				File errorLogFile = fileService.createErrorLogFile(e);
-				backup.setStatusFailed(errorLogFile);
-			 }
-		*/
+			backupRepository.save(backup);
 
+			return backupMapper.backupToDto(backup);
+		}
+
+		backup.setStatusSkipped();
 		backupRepository.save(backup);
 
 		return backupMapper.backupToDto(backup);
