@@ -63,14 +63,19 @@ public class Backup {
 		return new Backup(worker, fileId, BackupStatus.IN_PROGRESS);
 	}
 
+	public static Backup createBackup(String worker) {
+		return new Backup(worker, null, BackupStatus.IN_PROGRESS);
+	}
+
 	public void setStatusSkipped() {
 		this.status = BackupStatus.SKIPPED;
 		this.fileId = null;
 		this.endedAt = Instant.now();
 	}
 
-	public void setStatusCompleted() {
+	public void setStatusCompleted(File fileId) {
 		this.status = BackupStatus.COMPLETED;
+		this.fileId = fileId;
 		this.endedAt = Instant.now();
 	}
 

@@ -19,7 +19,7 @@ public class FileController {
 
 	private final FileServiceInterface fileServiceInterface;
 
-	@GetMapping("{/id}/download")
+	@GetMapping("/{id}/download")
 	ResponseEntity<String> downloadFile(@PathVariable Long id) throws IOException {
 		String response = fileServiceInterface.downloadFile(id);
 		return ResponseEntity.ok(response);
