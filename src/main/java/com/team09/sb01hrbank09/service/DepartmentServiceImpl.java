@@ -31,10 +31,12 @@ public class DepartmentServiceImpl implements DepartmentServiceInterface{
             throw new IllegalArgumentException("생성하려는 부서명이 이미 존재합니다.");
         }
 
+
         Department department = Department.createDepartments(request.name(), request.description(), request.establishedDate());
 
         Department savedDepartment = departmentRepository.save(department);
         return departmentMapper.departmentToDto(savedDepartment);
+
     }
     @Override
     public DepartmentDto updateDepartment(Long id, DepartmentUpdateRequest request) {
@@ -69,58 +71,59 @@ public class DepartmentServiceImpl implements DepartmentServiceInterface{
     @Override
     @Transactional(readOnly = true)
     public CursorPageResponseDepartmentDto findDepartmentList(CursorPageRequestDepartment request) {
-        if (request.sortDirection() == null || (!request.sortDirection().equalsIgnoreCase("ASC") && !request.sortDirection().equalsIgnoreCase("DESC"))) {
-            throw new IllegalArgumentException("유효하지 않은 정렬 방향입니다.");
-        }
-        if (request.sortField() == null || (!request.sortField().equals("name") && !request.sortField().equals("establishedDate"))) {
-            throw new IllegalArgumentException("유효하지 않은 정렬 필드입니다.");
-        }
-        Sort sort = Sort.by(Sort.Direction.fromString(request.sortDirection()), request.sortField()); //소팅전략
-        PageRequest pageRequest = PageRequest.of(0, request.size(), sort);
+        // if (request.sortDirection() == null || (!request.sortDirection().equalsIgnoreCase("ASC") && !request.sortDirection().equalsIgnoreCase("DESC"))) {
+        //     throw new IllegalArgumentException("유효하지 않은 정렬 방향입니다.");
+        // }
+        // if (request.sortField() == null || (!request.sortField().equals("name") && !request.sortField().equals("establishedDate"))) {
+        //     throw new IllegalArgumentException("유효하지 않은 정렬 필드입니다.");
+        // }
+        // Sort sort = Sort.by(Sort.Direction.fromString(request.sortDirection()), request.sortField()); //소팅전략
+        // PageRequest pageRequest = PageRequest.of(0, request.size(), sort);
+        //
+        // String escapedSearchTerm = escapeSpecialCharacters(request.nameOrDescription()); //injection, 특수문자 방지
+        //
+        // List<Department> departments;
+        // long totalElements;
+        // if (request.idAfter() != null) {
+        //     departments = departmentRepository.findByIdGreaterThanAndNameContainingOrDescriptionContaining(
+        //             request.idAfter(), escapedSearchTerm, escapedSearchTerm, pageRequest
+        //     );
+        //     totalElements = departmentRepository.countByIdGreaterThanAndNameContainingOrDescriptionContaining(
+        //             request.idAfter(), escapedSearchTerm, escapedSearchTerm
+        //     );
+        // } else {
+        //     departments = departmentRepository.findByNameContainingOrDescriptionContaining(
+        //             escapedSearchTerm, escapedSearchTerm, pageRequest
+        //     );
+        //     totalElements = departmentRepository.countByNameContainingOrDescriptionContaining(
+        //             escapedSearchTerm, escapedSearchTerm
+        //     );
+        // }
+        //
+        // List<DepartmentDto> departmentDtos = departments.stream()
+        //         .map(departmentMapper::departmentToDto)
+        //         .toList();
+        //
+        // Long nextIdAfter = null;
+        // String nextCursor = null;
+        // boolean hasNext = false;
+        // if (!departments.isEmpty()) {
+        //     nextIdAfter = departments.get(departments.size() - 1).getId();
+        //     nextCursor = String.valueOf(nextIdAfter);
+        //
+        //     if (request.idAfter() != null) {
+        //         hasNext = departmentRepository.findFirstByIdGreaterThanAndNameContainingOrDescriptionContaining(
+        //                 nextIdAfter, escapedSearchTerm, escapedSearchTerm, PageRequest.of(0, 1, sort)
+        //         ).isPresent();
+        //     } else {
+        //         hasNext = departmentRepository.findFirstByNameContainingOrDescriptionContaining(
+        //                 escapedSearchTerm, escapedSearchTerm, PageRequest.of(0, 1, sort)
+        //         ).isPresent();
+        //     }
+        // }
 
-        String escapedSearchTerm = escapeSpecialCharacters(request.nameOrDescription()); //injection, 특수문자 방지
-
-        List<Department> departments;
-        long totalElements;
-        if (request.idAfter() != null) {
-            departments = departmentRepository.findByIdGreaterThanAndNameContainingOrDescriptionContaining(
-                    request.idAfter(), escapedSearchTerm, escapedSearchTerm, pageRequest
-            );
-            totalElements = departmentRepository.countByIdGreaterThanAndNameContainingOrDescriptionContaining(
-                    request.idAfter(), escapedSearchTerm, escapedSearchTerm
-            );
-        } else {
-            departments = departmentRepository.findByNameContainingOrDescriptionContaining(
-                    escapedSearchTerm, escapedSearchTerm, pageRequest
-            );
-            totalElements = departmentRepository.countByNameContainingOrDescriptionContaining(
-                    escapedSearchTerm, escapedSearchTerm
-            );
-        }
-
-        List<DepartmentDto> departmentDtos = departments.stream()
-                .map(departmentMapper::departmentToDto)
-                .toList();
-
-        Long nextIdAfter = null;
-        String nextCursor = null;
-        boolean hasNext = false;
-        if (!departments.isEmpty()) {
-            nextIdAfter = departments.get(departments.size() - 1).getId();
-            nextCursor = String.valueOf(nextIdAfter);
-
-            if (request.idAfter() != null) {
-                hasNext = departmentRepository.findFirstByIdGreaterThanAndNameContainingOrDescriptionContaining(
-                        nextIdAfter, escapedSearchTerm, escapedSearchTerm, PageRequest.of(0, 1, sort)
-                ).isPresent();
-            } else {
-                hasNext = departmentRepository.findFirstByNameContainingOrDescriptionContaining(
-                        escapedSearchTerm, escapedSearchTerm, PageRequest.of(0, 1, sort)
-                ).isPresent();
-            }
-        }
-
-        return new CursorPageResponseDepartmentDto(departmentDtos, nextCursor, nextIdAfter, request.size(), totalElements, hasNext);
+        //return new CursorPageResponseDepartmentDto(departmentDtos, nextCursor, nextIdAfter, request.size(), totalElements, hasNext);
+        return null;
     }
 
     private String escapeSpecialCharacters(String searchTerm) {

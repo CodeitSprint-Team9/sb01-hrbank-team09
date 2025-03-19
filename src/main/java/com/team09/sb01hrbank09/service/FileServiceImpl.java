@@ -13,6 +13,7 @@ import java.util.NoSuchElementException;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -21,14 +22,19 @@ import com.team09.sb01hrbank09.dto.entityDto.EmployeeDto;
 import com.team09.sb01hrbank09.entity.File;
 import com.team09.sb01hrbank09.repository.FileRepository;
 
-import lombok.RequiredArgsConstructor;
-
 @Service
-@RequiredArgsConstructor
 public class FileServiceImpl implements FileServiceInterface {
 
 	private final FileRepository fileRepository;
 	private final EmployeeServiceInterface employeeServiceInterface;
+
+	public FileServiceImpl(
+		@Lazy FileRepository fileRepository,
+		@Lazy EmployeeServiceInterface employeeServiceInterface
+	) {
+		this.fileRepository = fileRepository;
+		this.employeeServiceInterface = employeeServiceInterface;
+	}
 
 	@Override
 	@Transactional(readOnly = true)
@@ -73,7 +79,7 @@ public class FileServiceImpl implements FileServiceInterface {
 					employee.email(),
 					employee.departmentName(),
 					employee.position(),
-					employee.hireDate(),
+					employee.hireDateFrom(),
 					employee.status()
 				);
 

@@ -10,10 +10,9 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
-
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -33,11 +32,9 @@ import com.team09.sb01hrbank09.event.EmployeeEvent;
 import com.team09.sb01hrbank09.mapper.EmployeeMapper;
 import com.team09.sb01hrbank09.repository.EmployeeRepository;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class EmployeeServiceImpl implements EmployeeServiceInterface {
 
@@ -47,6 +44,22 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 	private final ChangeLogServiceInterface changeLogServiceInterface;
 	private final EmployeeMapper employeeMapper;
 	private final ApplicationEventPublisher eventPublisher;
+
+	@Autowired
+	public EmployeeServiceImpl(
+		@Lazy EmployeeRepository employeeRepository,
+		@Lazy DepartmentServiceInterface departmentServiceInterface,
+		@Lazy FileServiceInterface fileServiceInterface,
+		@Lazy ChangeLogServiceInterface changeLogServiceInterface,
+		@Lazy EmployeeMapper employeeMapper,
+		@Lazy ApplicationEventPublisher eventPublisher) {
+		this.employeeRepository = employeeRepository;
+		this.departmentServiceInterface = departmentServiceInterface;
+		this.fileServiceInterface = fileServiceInterface;
+		this.changeLogServiceInterface = changeLogServiceInterface;
+		this.employeeMapper = employeeMapper;
+		this.eventPublisher = eventPublisher;
+	}
 
 	private Instant updateTime = null;
 
@@ -73,21 +86,21 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 			employeeCreateRequest.hireDate(), EmployeeStatus.ACTIVE, file, usingDepartment);
 
 		//만들어지면 넣기
-		updateTime = Instant.now();
-		String memo;
-		if (employeeCreateRequest.memo() == null) {
-			memo = "신규 직원 등록";
-		} else {
-			memo = employeeCreateRequest.memo();
-		}
-		log.info("이벤트 발행시작...");
-		//이벤트 발행 (before = null, after = 새 Employee)
-		eventPublisher.publishEvent(new EmployeeEvent(
-			ChangeLogType.CREATED, employee.getEmployeeNumber(), memo, "127.0.0.1", null,
-			employeeMapper.employeeToDto(employee)
-		));
-		log.info("change-logs 생성 완료");
-    
+		// updateTime = Instant.now();
+		// String memo;
+		// if (employeeCreateRequest.memo() == null) {
+		// 	memo = "신규 직원 등록";
+		// } else {
+		// 	memo = employeeCreateRequest.memo();
+		// }
+		// log.info("이벤트 발행시작...");
+		// //이벤트 발행 (before = null, after = 새 Employee)
+		// eventPublisher.publishEvent(new EmployeeEvent(
+		// 	ChangeLogType.CREATED, employee.getEmployeeNumber(), memo, "127.0.0.1", null,
+		// 	employeeMapper.employeeToDto(employee)
+		// ));
+		// log.info("change-logs 생성 완료");
+
 		return employeeMapper.employeeToDto(employeeRepository.save(employee));
 	}
 
@@ -105,62 +118,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 		String departmentName, String position, String hireDateFrom, String hireDateTo, String status, Long idAfter,
 		String cursor, int size, String sortField, String sortDirection) {
 
-		// if (sortDirection == null || (!sortDirection.equalsIgnoreCase("ASC") && !sortDirection.equalsIgnoreCase("DESC"))) {
-		// 	throw new IllegalArgumentException("유효하지 않은 정렬 방향입니다.");
-		// }
-		// if (sortField == null || (!sortField.equals("name") && !sortField.equals("hireDate"))) {
-		// 	throw new IllegalArgumentException("유효하지 않은 정렬 필드입니다.");
-		// }
-
-		Sort sort = Sort.by(Sort.Direction.fromString(sortDirection), sortField);
-		PageRequest pageRequest = PageRequest.of(0, size, sort);
-
-		String escapedSearchTerm = escapeSpecialCharacters(nameOrEmail);
-
-		List<Employee> employees;
-		long totalElements;
-		if (idAfter != null) {
-			employees = employeeRepository.findByIdGreaterThanAndFilters(
-				idAfter, escapedSearchTerm, employeeNumber, departmentName, position, Instant.parse(hireDateFrom),
-				Instant.parse(hireDateTo), EmployeeStatus.valueOf(status.toUpperCase()), pageRequest
-			);
-			totalElements = employeeRepository.countByIdGreaterThanAndFilters(
-				idAfter, escapedSearchTerm, employeeNumber, departmentName, position,
-				Instant.parse(hireDateFrom), Instant.parse(hireDateTo), EmployeeStatus.valueOf(status.toUpperCase())
-			);
-		} else {
-			employees = employeeRepository.findByFilters(
-				escapedSearchTerm, employeeNumber, departmentName, position, Instant.parse(hireDateFrom),
-				Instant.parse(hireDateTo), EmployeeStatus.valueOf(status.toUpperCase()), pageRequest
-			);
-			totalElements = employeeRepository.countByFilters(
-				escapedSearchTerm, employeeNumber, departmentName, position,
-				Instant.parse(hireDateFrom), Instant.parse(hireDateTo), EmployeeStatus.valueOf(status.toUpperCase())
-			);
-		}
-
-		List<EmployeeDto> employeeDtos = employees.stream()
-			.map(employeeMapper::employeeToDto)
-			.toList();
-
-		Long nextIdAfter = null;
-		String nextCursor = null;
-		boolean hasNext = false;
-		if (!employees.isEmpty()) {
-			nextIdAfter = employees.get(employees.size() - 1).getId();
-			nextCursor = String.valueOf(nextIdAfter);
-			if (idAfter != null) {
-				hasNext = employeeRepository.findFirstByIdGreaterThanAndNameContainingOrDescriptionContaining(
-					nextIdAfter, escapedSearchTerm, escapedSearchTerm, PageRequest.of(0, 1, sort)
-				).isPresent();
-			} else {
-				hasNext = employeeRepository.findFirstByNameContainingOrDescriptionContaining(
-					escapedSearchTerm, escapedSearchTerm, PageRequest.of(0, 1, sort)
-				).isPresent();
-			}
-		}
-
-		return new CursorPageResponseEmployeeDto(employeeDtos, nextCursor, nextIdAfter, size, totalElements, hasNext);
+		return null;
 	}
 
 	@Override
@@ -183,11 +141,11 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 			employeeRepository.deleteById(id);
 			updateTime = Instant.now();
 
-			log.info("이벤트 발행시작...");
-			eventPublisher.publishEvent(new EmployeeEvent(
-				ChangeLogType.DELETED, employee.getEmployeeNumber(), "직원 삭제", "127.0.0.1", beforeEmployee, null
-			));
-			log.info("change-logs 생성 완료");
+			// log.info("이벤트 발행시작...");
+			// eventPublisher.publishEvent(new EmployeeEvent(
+			// 	ChangeLogType.DELETED, employee.getEmployeeNumber(), "직원 삭제", "127.0.0.1", beforeEmployee, null
+			// ));
+			// log.info("change-logs 생성 완료");
 
 			return true;
 		}
@@ -239,12 +197,12 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 			memo = employeeUpdateRequest.memo();
 		}
 		// 이벤트 발행 (before = 기존 Employee, after = 수정된 Employee)
-		log.info("이벤트 발행시작...");
-		eventPublisher.publishEvent(new EmployeeEvent(
-			ChangeLogType.UPDATED, employee.getEmployeeNumber(), memo, "127.0.0.1",
-			beforeEmployee, afterEmployee
-		));
-		log.info("change-logs 생성 완료");
+		// log.info("이벤트 발행시작...");
+		// eventPublisher.publishEvent(new EmployeeEvent(
+		// 	ChangeLogType.UPDATED, employee.getEmployeeNumber(), memo, "127.0.0.1",
+		// 	beforeEmployee, afterEmployee
+		// ));
+		// log.info("change-logs 생성 완료");
 
 		return employeeMapper.employeeToDto(employee);
 	}
@@ -289,12 +247,12 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 	@Transactional(readOnly = true)
 	public Long countEmployee(String status, Instant startedAt, Instant endedAt) {
 		EmployeeStatus findStatus = EmployeeStatus.valueOf(status.toUpperCase());
-		return employeeRepository.countByStatusAndCreatedAtBetween(findStatus, startedAt, endedAt);
+		return employeeRepository.countByStatusAndHireDateFromBetween(findStatus, startedAt, endedAt);
 	}
 
 	private List<EmployeeDistributionDto> convertDistributionPosition(String status) {
 		List<EmployeeDistributionDto> distribution = new ArrayList<>();
-		List<Object[]> results = employeeRepository.findDistributatinPosition(
+		List<Object[]> results = employeeRepository.findDistributionPosition(
 			EmployeeStatus.valueOf(status.toUpperCase()));
 		for (Object[] row : results) {
 			String positionName = (String)row[0];
@@ -309,7 +267,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 
 	private List<EmployeeDistributionDto> convertDistributionDepartment(String status) {
 		List<EmployeeDistributionDto> distribution = new ArrayList<>();
-		List<Object[]> results = employeeRepository.findDistributatinDepartment(
+		List<Object[]> results = employeeRepository.findDistributionDepartment(
 			EmployeeStatus.valueOf(status.toUpperCase()));
 		for (Object[] row : results) {
 			Long departmentId = (Long)row[0];

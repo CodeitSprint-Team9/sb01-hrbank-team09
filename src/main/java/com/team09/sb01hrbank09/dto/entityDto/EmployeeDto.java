@@ -10,7 +10,7 @@ public record EmployeeDto(
 	Long departmentId,
 	String departmentName,
 	String position,
-	Instant hireDate,
+	Instant hireDateFrom,
 	String status,
 	Long profileImageId) {
 }

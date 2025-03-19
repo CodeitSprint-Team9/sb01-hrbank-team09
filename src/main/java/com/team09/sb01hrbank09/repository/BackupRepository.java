@@ -4,6 +4,8 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -26,50 +28,27 @@ public interface BackupRepository extends JpaRepository<Backup, Long> {
 
 	@Query("""
 		SELECT b FROM Backup b
-		WHERE :worker IS NULL OR b.worker LIKE %:worker%
-		AND :status IS NULL OR b.status = :status
-		AND :startedAtFrom IS NULL OR b.startedAt >= :startedAtFrom
-		AND :startedAtTo IS NULL OR b.startedAt <= :startedAtTo
-		AND :idAfter IS NULL OR :idAfter > b.id
-		ORDER BY :sortField DESC
-		LIMIT :size
+		WHERE (:worker IS NULL OR b.worker LIKE %:worker%)
+		AND (:status IS NULL OR b.status = :status)
+		AND (:startedAtFrom IS NULL OR b.startedAt >= :startedAtFrom)
+		AND (:startedAtTo IS NULL OR b.startedAt <= :startedAtTo)
+		AND (:idAfter IS NULL OR :idAfter > b.id)
 		""")
-	List<Backup> findBackupsByCursorOrderByDesc(
+	Page<Backup> findBackupsByCursor(
 		String worker,
 		String status,
 		Instant startedAtFrom,
 		Instant startedAtTo,
 		Long idAfter,
-		String sortField,
-		Integer size
-	);
-
-	@Query("""
-		SELECT b FROM Backup b
-		WHERE :worker IS NULL OR b.worker LIKE %:worker%
-		AND :status IS NULL OR b.status = :status
-		AND :startedAtFrom IS NULL OR b.startedAt >= :startedAtFrom
-		AND :startedAtTo IS NULL OR b.startedAt <= :startedAtTo
-		AND :idAfter IS NULL OR :idAfter < b.id
-		ORDER BY :sortField ASC
-		LIMIT :size
-		""")
-	List<Backup> findBackupsByCursorOrderByAsc(
-		String worker,
-		String status,
-		Instant startedAtFrom,
-		Instant startedAtTo,
-		Long idAfter,
-		String sortField,
-		Integer size
+		Pageable pageable
 	);
 
 	@Query("""
 		SELECT COUNT(b.id) FROM Backup b
-		WHERE :worker IS NULL OR b.worker LIKE %:worker%
-		AND :status IS NULL OR b.status = :status
-		AND :startedAtFrom IS NULL OR b.startedAt >= :startedAtFrom
-		AND :startedAtTo IS NULL OR b.startedAt <= :startedAtTo
+		WHERE (:worker IS NULL OR b.worker LIKE %:worker%)
+		AND (:status IS NULL OR b.status = :status)
+		AND (:startedAtFrom IS NULL OR b.startedAt >= :startedAtFrom)
+		AND (:startedAtTo IS NULL OR b.startedAt <= :startedAtTo)
 		""")
 	Long countBackup(
 		String worker,
