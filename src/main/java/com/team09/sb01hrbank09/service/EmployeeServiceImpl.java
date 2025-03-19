@@ -12,6 +12,8 @@ import java.util.regex.Pattern;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.context.ApplicationEventPublisher;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -24,15 +26,19 @@ import com.team09.sb01hrbank09.dto.request.EmployeeUpdateRequest;
 import com.team09.sb01hrbank09.dto.response.CursorPageResponseEmployeeDto;
 import com.team09.sb01hrbank09.entity.Department;
 import com.team09.sb01hrbank09.entity.Employee;
+import com.team09.sb01hrbank09.entity.Enum.ChangeLogType;
 import com.team09.sb01hrbank09.entity.Enum.EmployeeStatus;
 import com.team09.sb01hrbank09.entity.File;
+import com.team09.sb01hrbank09.event.EmployeeEvent;
 import com.team09.sb01hrbank09.mapper.EmployeeMapper;
 import com.team09.sb01hrbank09.repository.EmployeeRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class EmployeeServiceImpl implements EmployeeServiceInterface {
 
 	private final EmployeeRepository employeeRepository;
@@ -40,6 +46,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 	private final FileServiceInterface fileServiceInterface;
 	private final ChangeLogServiceInterface changeLogServiceInterface;
 	private final EmployeeMapper employeeMapper;
+	private final ApplicationEventPublisher eventPublisher;
 
 	private Instant updateTime = null;
 
@@ -66,9 +73,21 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 			employeeCreateRequest.hireDate(), EmployeeStatus.ACTIVE, file, usingDepartment);
 
 		//만들어지면 넣기
-		//changeLogServiceInterface.createChangeLog(oldEmployee,newEmployee,ipAdress);
-
 		updateTime = Instant.now();
+		String memo;
+		if (employeeCreateRequest.memo() == null) {
+			memo = "신규 직원 등록";
+		} else {
+			memo = employeeCreateRequest.memo();
+		}
+		log.info("이벤트 발행시작...");
+		//이벤트 발행 (before = null, after = 새 Employee)
+		eventPublisher.publishEvent(new EmployeeEvent(
+			ChangeLogType.CREATED, employee.getEmployeeNumber(), memo, "127.0.0.1", null,
+			employeeMapper.employeeToDto(employee)
+		));
+		log.info("change-logs 생성 완료");
+    
 		return employeeMapper.employeeToDto(employeeRepository.save(employee));
 	}
 
@@ -158,9 +177,18 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 	public boolean deleteEmployee(Long id, String ipAddress) {
 		if (employeeRepository.existsById(id)) {
 			Employee employee = employeeRepository.findById(id).get();
+			//추가 코드
+			EmployeeDto beforeEmployee = employeeMapper.employeeToDto(employee);
 			fileServiceInterface.deleteFile(employee.getFile());
 			employeeRepository.deleteById(id);
 			updateTime = Instant.now();
+
+			log.info("이벤트 발행시작...");
+			eventPublisher.publishEvent(new EmployeeEvent(
+				ChangeLogType.DELETED, employee.getEmployeeNumber(), "직원 삭제", "127.0.0.1", beforeEmployee, null
+			));
+			log.info("change-logs 생성 완료");
+
 			return true;
 		}
 		return false;
@@ -176,6 +204,9 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 
 			.orElseThrow(() -> new NoSuchElementException("Message with id " + id + " not found"));
 		File file = null;
+
+		// 변경 전 상태 저장 (깊은 복사)
+		EmployeeDto beforeEmployee = employeeMapper.employeeToDto(employee);
 
 		Department usingDepartment = departmentServiceInterface.findDepartmentEntityById(
 			employeeUpdateRequest.departmentId());
@@ -197,9 +228,24 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 			employee.updateFile(file);
 		}
 
-		//만들어지면 넣기
-		//changeLogServiceInterface.createChangeLog(ChnageLogDto request,EmployeeDto old, EmployeeDto new);
 		updateTime = Instant.now();
+
+		//만들어지면 넣기(dto변환)
+		EmployeeDto afterEmployee = employeeMapper.employeeToDto(employee);
+		String memo;
+		if (employeeUpdateRequest.memo() == null) {
+			memo = "직원 정보 수정";
+		} else {
+			memo = employeeUpdateRequest.memo();
+		}
+		// 이벤트 발행 (before = 기존 Employee, after = 수정된 Employee)
+		log.info("이벤트 발행시작...");
+		eventPublisher.publishEvent(new EmployeeEvent(
+			ChangeLogType.UPDATED, employee.getEmployeeNumber(), memo, "127.0.0.1",
+			beforeEmployee, afterEmployee
+		));
+		log.info("change-logs 생성 완료");
+
 		return employeeMapper.employeeToDto(employee);
 	}
 

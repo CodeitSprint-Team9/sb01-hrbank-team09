@@ -75,4 +75,6 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 		Instant hireDateFrom, Instant hireDateTo, EmployeeStatus status
 	);
 
+
+	Employee findByEmployeeNumber(String employeeNumber);
 }
