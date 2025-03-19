@@ -41,6 +41,8 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 	private final ChangeLogServiceInterface changeLogServiceInterface;
 	private final EmployeeMapper employeeMapper;
 
+	private Instant updateTime = null;
+
 	@Override
 	@Transactional
 	public EmployeeDto creatEmployee(EmployeeCreateRequest employeeCreateRequest, MultipartFile profileImg) throws
@@ -65,6 +67,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 		//만들어지면 넣기
 		//changeLogServiceInterface.createChangeLog(ChnageLogDto request);
 
+		updateTime = Instant.now();
 		return employeeMapper.employeeToDto(employeeRepository.save(employee));
 	}
 
@@ -156,6 +159,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 			Employee employee = employeeRepository.findById(id).get();
 			fileServiceInterface.deleteFile(employee.getFile());
 			employeeRepository.deleteById(id);
+			updateTime = Instant.now();
 			return true;
 		}
 		return false;
@@ -194,7 +198,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 
 		//만들어지면 넣기
 		//changeLogServiceInterface.createChangeLog(ChnageLogDto request,EmployeeDto old, EmployeeDto new);
-
+		updateTime = Instant.now();
 		return employeeMapper.employeeToDto(employee);
 	}
 
@@ -279,5 +283,10 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 		Pattern specialCharacters = Pattern.compile("[\\(\\)\\[\\]\\{\\}\\^\\$\\.\\*\\+\\?\\|\\\\]");
 		Matcher matcher = specialCharacters.matcher(searchTerm);
 		return matcher.replaceAll("\\\\$0");
+	}
+
+	@Override
+	public Instant getUpdateTime() {
+		return updateTime;
 	}
 }

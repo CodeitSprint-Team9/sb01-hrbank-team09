@@ -2,6 +2,7 @@ package com.team09.sb01hrbank09.service;
 
 import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -60,7 +61,7 @@ public class FileServiceImpl implements FileServiceInterface {
 				 .withHeader("ID", "EmployeeNumber", "Name", "Email", "DepartmentName",
 					 "Position", "HireDate", "Status"))) {
 
-			int batchSize = 1000;
+			int batchSize = 10000;
 			int count = 0;
 
 			for (EmployeeDto employee : data) {
@@ -78,20 +79,25 @@ public class FileServiceImpl implements FileServiceInterface {
 
 				count++;
 
-
 				if (count % batchSize == 0) {
 					csvPrinter.flush();
 				}
 			}
 
-
 			csvPrinter.flush();
+			File fileEntity = File.createCsvFile(fileName, "csv", Files.size(filePath), filePath);
+			fileRepository.save(fileEntity);
+
+			return fileEntity;
+		} catch (IOException e) {
+			Path errorPath = logError(filePath, e);
+			java.io.File errorFileObj = errorPath.toFile();
+			long errorFileSize = Files.size(errorPath);
+
+			File errorFile = File.createErrorFile(errorFileObj.getName(), errorFileSize, errorPath);
+			fileRepository.save(errorFile);
+			return errorFile;
 		}
-
-		File fileEntity = File.createCsvFile(fileName, "csv", Files.size(filePath), filePath);
-		fileRepository.save(fileEntity);
-
-		return fileEntity;
 
 	}
 
@@ -113,7 +119,7 @@ public class FileServiceImpl implements FileServiceInterface {
 	@Transactional
 	public boolean deleteFile(File file) {
 		if (fileRepository.existsById(file.getId())) {
-			Path path=file.getFilePath();
+			Path path = file.getFilePath();
 			try {
 				if (Files.exists(path)) {
 					Files.delete(path);
@@ -126,5 +132,16 @@ public class FileServiceImpl implements FileServiceInterface {
 			return true;
 		}
 		return false;
+	}
+
+	private Path logError(Path filePath, IOException e) {
+		String logFileName = "backup_error_" + Instant.now().toEpochMilli() + ".log";
+		Path logFilePath = Paths.get(filePath.getParent().toString(), logFileName);
+		try (BufferedWriter writer = new BufferedWriter(new FileWriter(logFilePath.toFile()))) {
+			writer.write("Error during CSV backup: " + e.getMessage());
+		} catch (IOException logEx) {
+			logEx.printStackTrace();
+		}
+		return logFilePath;
 	}
 }

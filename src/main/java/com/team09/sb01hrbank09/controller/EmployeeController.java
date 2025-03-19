@@ -1,5 +1,6 @@
 package com.team09.sb01hrbank09.controller;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -38,7 +39,7 @@ public class EmployeeController {
 	public ResponseEntity<EmployeeDto> creatEmployee(
 		@RequestPart("employeeCreateRequest") EmployeeCreateRequest employeeCreateRequest,
 		@RequestPart(value = "profile", required = false) MultipartFile profileImage
-	) {
+	) throws IOException {
 		EmployeeDto response = employeeServiceInterface.creatEmployee(employeeCreateRequest, profileImage);
 
 		return ResponseEntity.ok(response);
@@ -87,7 +88,7 @@ public class EmployeeController {
 	@PatchMapping("/{id}")
 	ResponseEntity<EmployeeDto> updateEmployee(@PathVariable Long id,
 		@RequestPart("employeeUpdateRequest") EmployeeUpdateRequest employeeUpdateRequest,
-		@RequestPart(value = "profile", required = false) MultipartFile profileImage) {
+		@RequestPart(value = "profile", required = false) MultipartFile profileImage) throws IOException {
 
 		EmployeeDto response = employeeServiceInterface.updateEmployee(id, employeeUpdateRequest, profileImage);
 

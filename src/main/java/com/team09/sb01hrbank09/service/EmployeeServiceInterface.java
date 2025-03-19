@@ -39,4 +39,5 @@ public interface EmployeeServiceInterface {
 	//직원 수 조회
 	Long countEmployee(String status, Instant startedAt, Instant endedAt);
 
+	Instant getUpdateTime();
 }

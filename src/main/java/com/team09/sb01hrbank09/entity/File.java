@@ -56,6 +56,11 @@ public class File {
 		return new File(filename, type, size, convertPath);
 	}
 
+	public static File createErrorFile(String filename, Long size, Path path) {
+		String convertPath = path.toString();
+		return new File(filename, ".loge", size, convertPath);
+	}
+
 	public void updateFileName(String updateName) {
 		this.name = "id_" + this.id + "_" + updateName;
 	}
