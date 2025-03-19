@@ -39,11 +39,9 @@ public class BackupLogServiceImpl implements BackupLogServiceInterface {
 			lastBackupTime = latestCompletedBackup.getStartedAt();
 		}
 
-		Instant lastEmployeeUpdate = employeeService.getUpdateTime();
-
+		Instant lastEmployeeUpdate = getUpdateTime();
 		Backup backup = Backup.createBackup(worker);
-		if (lastEmployeeUpdate == null || lastEmployeeUpdate.isAfter(lastBackupTime)) {
-
+		if (lastEmployeeUpdate.isAfter(lastBackupTime)) {
 			try {
 				File backupFile = fileService.createCsvBackupFile();
 				backup.setStatusCompleted(backupFile);
@@ -60,6 +58,10 @@ public class BackupLogServiceImpl implements BackupLogServiceInterface {
 		backupRepository.save(backup);
 
 		return backupMapper.backupToDto(backup);
+	}
+
+	private synchronized Instant getUpdateTime() {
+		return employeeService.getUpdateTime();
 	}
 
 	@Override
