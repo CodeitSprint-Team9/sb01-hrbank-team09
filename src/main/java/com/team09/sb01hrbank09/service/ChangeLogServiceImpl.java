@@ -20,11 +20,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.team09.sb01hrbank09.dto.entityDto.ChangeLogDto;
 import com.team09.sb01hrbank09.dto.entityDto.DiffDto;
+import com.team09.sb01hrbank09.dto.entityDto.EmployeeDto;
 import com.team09.sb01hrbank09.dto.request.CursorPageRequestChangeLog;
 import com.team09.sb01hrbank09.dto.response.CursorPageResponseChangeLogDto;
 import com.team09.sb01hrbank09.entity.ChangeLog;
+import com.team09.sb01hrbank09.entity.Enum.ChangeLogType;
 import com.team09.sb01hrbank09.mapper.ChangeLogMapper;
 import com.team09.sb01hrbank09.repository.ChangeLogRepository;
 
@@ -40,6 +44,48 @@ public class ChangeLogServiceImpl implements ChangeLogServiceInterface {
 
 	private final ChangeLogRepository changeLogRepository;
 	private final ChangeLogMapper changeLogMapper;
+	private final ObjectMapper objectMapper;
+
+	@Override
+	@Transactional
+	public void createChangeLog(ChangeLogType type, String employeeNumber, String memo, String ipAddress,
+		EmployeeDto beforeEmployee, EmployeeDto afterEmployee) {
+		log.info("ChangeLog 생성 시작, 직원번호: {}", employeeNumber);
+
+		try {
+			// EmployeeDto를 JSON 문자열로 변환
+			String beforeEmployeeJson = toJson(beforeEmployee);
+			String afterEmployeeJson = toJson(afterEmployee);
+
+			// ChangeLog 생성
+			ChangeLog changeLog = ChangeLog.createChangeLog(
+				type, employeeNumber, ipAddress, memo, beforeEmployeeJson, afterEmployeeJson
+			);
+
+			// ChangeLog 저장
+			changeLogRepository.save(changeLog);
+			log.info("ChangeLog 저장 완료, 직원번호: {}", employeeNumber);
+		} catch (Exception e) {
+			log.error("ChangeLog 저장 중 예외 발생: {}", e.getMessage(), e);
+			throw new RuntimeException("ChangeLog 저장 실패", e);
+		}
+	}
+
+	// EmployeeDto를 JSON 문자열로 변환하는 메서드
+	private String toJson(EmployeeDto employee) {
+		if (employee == null) {
+			return "{}"; // 비어있는 객체는 빈 JSON으로 처리
+		}
+		try {
+			objectMapper.registerModule(new JavaTimeModule());
+			objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS); // 타임스탬프로 출력 방지
+
+			return objectMapper.writeValueAsString(employee);
+		} catch (JsonProcessingException e) {
+			log.error("EmployeeDto JSON 변환 실패: {}", e.getMessage(), e);
+			throw new RuntimeException("EmployeeDto JSON 변환 실패", e);
+		}
+	}
 
 	@Override
 	@Transactional(readOnly = true)

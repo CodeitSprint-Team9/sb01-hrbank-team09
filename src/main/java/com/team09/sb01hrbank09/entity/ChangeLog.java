@@ -4,6 +4,9 @@ import static jakarta.persistence.EnumType.*;
 
 import java.time.Instant;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import com.team09.sb01hrbank09.entity.Enum.ChangeLogType;
 
 import jakarta.persistence.Column;
@@ -38,10 +41,12 @@ public class ChangeLog {
 	@Column(nullable = false)
 	private Instant at;
 
-	@Column(columnDefinition = "jsonb") // JSON 저장
+	@JdbcTypeCode(SqlTypes.JSON) // Hibernate에서 JSONB 매핑 활성화
+	@Column(columnDefinition = "jsonb")
 	private String before;
 
-	@Column(columnDefinition = "jsonb") // JSON 저장
+	@JdbcTypeCode(SqlTypes.JSON) // Hibernate에서 JSONB 매핑 활성화
+	@Column(columnDefinition = "jsonb")
 	private String after;
 
 	protected ChangeLog() {

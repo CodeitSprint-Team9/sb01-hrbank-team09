@@ -38,7 +38,6 @@ import com.team09.sb01hrbank09.entity.Employee;
 import com.team09.sb01hrbank09.entity.Enum.ChangeLogType;
 import com.team09.sb01hrbank09.entity.Enum.EmployeeStatus;
 import com.team09.sb01hrbank09.entity.File;
-import com.team09.sb01hrbank09.event.EmployeeEvent;
 import com.team09.sb01hrbank09.mapper.EmployeeMapper;
 import com.team09.sb01hrbank09.repository.EmployeeRepository;
 
@@ -53,7 +52,6 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 	private final FileServiceInterface fileServiceInterface;
 	private final ChangeLogServiceInterface changeLogServiceInterface;
 	private final EmployeeMapper employeeMapper;
-	private final ApplicationEventPublisher eventPublisher;
 
 	@Autowired
 	public EmployeeServiceImpl(
@@ -68,7 +66,6 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 		this.fileServiceInterface = fileServiceInterface;
 		this.changeLogServiceInterface = changeLogServiceInterface;
 		this.employeeMapper = employeeMapper;
-		this.eventPublisher = eventPublisher;
 	}
 
 	private Instant updateTime = Instant.EPOCH;
@@ -104,12 +101,11 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 		} else {
 			memo = employeeCreateRequest.memo();
 		}
-		log.info("이벤트 발행시작...");
-		//이벤트 발행 (before = null, after = 새 Employee)
-		eventPublisher.publishEvent(new EmployeeEvent(
+		log.info("changelog 생성 시작...");
+		changeLogServiceInterface.createChangeLog(
 			ChangeLogType.CREATED, employee.getEmployeeNumber(), memo, ipAddress, null,
 			employeeMapper.employeeToDto(employee)
-		));
+		);
 		log.info("change-logs 생성 완료");
 
 		return employeeMapper.employeeToDto(employeeRepository.save(employee));
@@ -212,11 +208,12 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 			//로그작업
 			updateTime = Instant.now();
 
-			// log.info("이벤트 발행시작...");
-			// eventPublisher.publishEvent(new EmployeeEvent(
-			// 	ChangeLogType.DELETED, employee.getEmployeeNumber(), "직원 삭제", "127.0.0.1", beforeEmployee, null
-			// ));
-			// log.info("change-logs 생성 완료");
+			log.info("이벤트 발행시작...");
+			changeLogServiceInterface.createChangeLog(
+				ChangeLogType.CREATED, employee.getEmployeeNumber(), "직원 삭제", ipAddress,
+				employeeMapper.employeeToDto(employee), null
+			);
+			log.info("change-logs 생성 완료");
 
 			return true;
 		}
@@ -270,13 +267,13 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 		} else {
 			memo = employeeUpdateRequest.memo();
 		}
-		// 이벤트 발행 (before = 기존 Employee, after = 수정된 Employee)
-		// log.info("이벤트 발행시작...");
-		// eventPublisher.publishEvent(new EmployeeEvent(
-		// 	ChangeLogType.UPDATED, employee.getEmployeeNumber(), memo, "127.0.0.1",
-		// 	beforeEmployee, afterEmployee
-		// ));
-		// log.info("change-logs 생성 완료");
+
+		log.info("Change-logs 생성중...");
+		changeLogServiceInterface.createChangeLog(
+			ChangeLogType.CREATED, employee.getEmployeeNumber(), "직원 삭제", ipAddress,
+			beforeEmployee, afterEmployee
+		);
+		log.info("change-logs 생성 완료");
 
 		return employeeMapper.employeeToDto(employee);
 	}
