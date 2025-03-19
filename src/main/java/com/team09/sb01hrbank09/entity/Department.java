@@ -30,14 +30,14 @@ public class Department {
 	@Column(name = "employee_count", nullable = false)
 	private int employeeCount = 0;
 
-	private Department(String name, String description) {
+	private Department(String name, String description, Instant establishedDate) {
 		this.name = name;
 		this.description = description;
-		this.establishedDate = Instant.now();
+		this.establishedDate = establishedDate;
 	}
 
-	public static Department createDepartments(String name, String description) {
-		return new Department(name, description);
+	public static Department createDepartments(String name, String description, Instant establishedDate) {
+		return new Department(name, description, establishedDate);
 	}
 
 	public void updateDepartmentsName(String updateName) {
@@ -48,16 +48,20 @@ public class Department {
 		this.description = updateDescription;
 	}
 
-	public void updateCreatedLocalDate() {
-		this.establishedDate = Instant.now();
+//	public void updateCreatedLocalDate() {
+//		this.establishedDate = Instant.now();
+//	}
+
+	public void updateEstablishedDate(Instant establishedDate) {
+		this.establishedDate = establishedDate;
 	}
 
-	public void increaseCount() {
-		this.employeeCount++;
-	}
-
-	public void decreaseCount() {
-		this.employeeCount--;
-	}
+//	public void increaseCount() {
+//		this.employeeCount++;
+//	}
+//
+//	public void decreaseCount() {
+//		this.employeeCount--;
+//	}
 
 }
