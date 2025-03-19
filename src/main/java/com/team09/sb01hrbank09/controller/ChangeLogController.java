@@ -14,8 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.team09.sb01hrbank09.dto.entityDto.DiffDto;
 import com.team09.sb01hrbank09.dto.request.CursorPageRequestChangeLog;
 import com.team09.sb01hrbank09.dto.response.CursorPageResponseChangeLogDto;
-import com.team09.sb01hrbank09.entity.Enum.ChangeLogType;
-import com.team09.sb01hrbank09.service.ChangeLogServiceImpl;
+import com.team09.sb01hrbank09.service.ChangeLogServiceInterface;
 
 import lombok.RequiredArgsConstructor;
 
@@ -24,7 +23,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ChangeLogController {
 
-	private final ChangeLogServiceImpl changeLogService;
+	private final ChangeLogServiceInterface changeLogService;
 
 	//직원 정보 수정 이력 목록 조회
 	@GetMapping("")
@@ -41,13 +40,7 @@ public class ChangeLogController {
 		@RequestParam(defaultValue = "at") String sortField,
 		@RequestParam(defaultValue = "desc") String sortDirection) {
 
-		ChangeLogType changeLogType = null;
-		//type null이 아니라면 enum타입으로 변환
-		if (type != null) {
-			changeLogType = ChangeLogType.valueOf(type.toUpperCase());
-		}
-
-		CursorPageRequestChangeLog request = new CursorPageRequestChangeLog(employeeNumber, changeLogType, memo,
+		CursorPageRequestChangeLog request = new CursorPageRequestChangeLog(employeeNumber, type, memo,
 			ipAddress, atFrom, atTo, idAfter, cursor, size, sortField, sortDirection);
 
 		CursorPageResponseChangeLogDto response = changeLogService.findChangeLogList(request);

@@ -11,11 +11,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,7 +25,6 @@ import com.team09.sb01hrbank09.mapper.ChangeLogMapper;
 import com.team09.sb01hrbank09.repository.ChangeLogRepository;
 
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -55,96 +49,22 @@ public class ChangeLogServiceImpl implements ChangeLogServiceInterface {
 
 		// 정렬 방식 설정
 		// 요청된 정렬 방향이 "desc"면 내림차순 정렬, 그 외에는 오름차순 정렬 적용
-		Sort sort;
-		if (request.sortDirection().equalsIgnoreCase("desc")) {
-			sort = Sort.by(Sort.Order.desc(sortField));
-			log.info("내림차순 정렬 적용");
-		} else {
-			sort = Sort.by(Sort.Order.asc(sortField));
-			log.info("오름차순 정렬 적용");
-		}
+		String sortDirection = validateSortDirection(request.sortDirection());
+		log.info("정렬 방향: {}", sortDirection);
 
-		// 페이지네이션 설정
-		// 기본적으로 첫 번째 페이지(0번 페이지)에서 요청된 크기(request.size())만큼 데이터를 조회
-		Pageable pageable = PageRequest.of(0, request.size(), sort);
-		log.info("페이지네이션 설정 완료, size: {}, page: 0", request.size());
+		// 조건에 맞는 ChangeLog 목록 조회
+		List<ChangeLog> changeLogs = getChangeLogs(request, sortDirection);
+		log.info("조회된 데이터 수: {}", changeLogs.size());
 
-		// 검색 조건 설정
-		Specification<ChangeLog> spec = (root, query, criteriaBuilder) -> {
-			List<Predicate> predicates = new ArrayList<>();
-
-			// 직원 번호(employeeNumber) 검색 (부분 일치)
-			if (request.employeeNumber() != null) {
-				predicates.add(criteriaBuilder.like(root.get("employeeNumber"), "%" + request.employeeNumber() + "%"));
-				log.info("employeeNumber 필드로 검색, 값: {}", request.employeeNumber());
-			}
-			// 메모(memo) 검색 (부분 일치)
-			if (request.memo() != null) {
-				predicates.add(criteriaBuilder.like(root.get("memo"), "%" + request.memo() + "%"));
-				log.info("memo 필드로 검색, 값: {}", request.memo());
-			}
-			// IP 주소(ipAddress) 검색 (부분 일치)
-			if (request.ipAddress() != null) {
-				predicates.add(criteriaBuilder.like(root.get("ipAddress"), "%" + request.ipAddress() + "%"));
-				log.info("ipAddress 필드로 검색, 값: {}", request.ipAddress());
-			}
-			// 변경 유형(type) 검색 (완전 일치)
-			if (request.type() != null) {
-				predicates.add(criteriaBuilder.equal(root.get("type"), request.type()));
-				log.info("type 필드로 검색, 값: {}", request.type());
-			}
-			// 변경 시간(at) 검색 (범위 조건)
-			if (request.atFrom() != null && request.atTo() != null) {
-				predicates.add(criteriaBuilder.between(root.get("at"), request.atFrom(), request.atTo()));
-				log.info("at 필드로 범위 검색, from: {}, to: {}", request.atFrom(), request.atTo());
-			} else if (request.atFrom() != null) {
-				predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("at"), request.atFrom()));
-				log.info("at 필드로 from 이후 검색, from: {}", request.atFrom());
-			} else if (request.atTo() != null) {
-				predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("at"), request.atTo()));
-				log.info("at 필드로 to 이전 검색, to: {}", request.atTo());
-			}
-
-			// idAfter 기반 페이지네이션 적용
-			if (request.idAfter() != null) {
-				predicates.add(criteriaBuilder.greaterThan(root.get("id"), request.idAfter()));
-				log.info("idAfter 조건 적용, idAfter: {}", request.idAfter());
-			}
-
-			// 모든 조건을 AND 연산자로 결합하여 최종 Predicate 반환
-			return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
-		};
-
-		// 커서 기반 페이지네이션 적용
-		Page<ChangeLog> page;
-		if (request.cursor() != null) {
-			// cursor 값(이전 페이지의 마지막 at 값)을 Instant 타입으로 변환
-			Instant cursorAt = Instant.parse(request.cursor());
-
-			// 정렬 방향에 따라 "at" 필드 기준으로 커서 조건 추가
-			// desc 정렬 시 cursor 보다 작은 데이터 조회
-			// asc 정렬 시 cursor 보다 큰 데이터 조회
-			spec = spec.and((root, query, criteriaBuilder) ->
-				request.sortDirection().equalsIgnoreCase("desc")
-					? criteriaBuilder.lessThan(root.get("at"), cursorAt)
-					: criteriaBuilder.greaterThan(root.get("at"), cursorAt)
-			);
-			log.info("커서 기반 페이지네이션 적용, cursor: {}", request.cursor());
-		}
-
-		// 최종적으로 조건과 페이지네이션을 적용하여 데이터 조회
-		page = changeLogRepository.findAll(spec, pageable);
-		log.info("조회된 데이터 수: {}", page.getTotalElements());
-
-		// 조회된 ChangeLog 엔티티 리스트를 ChangeLogDto 리스트로 변환
-		// 여기에서 before,after는 필요가 없으므로 제외
-		List<ChangeLogDto> dtos = page.getContent().stream()
+		// ChangeLog 엔티티를 ChangeLogDto로 변환
+		List<ChangeLogDto> dtos = changeLogs.stream()
 			.map(log -> new ChangeLogDto(
 				log.getId(), log.getType(), log.getEmployeeNumber(), log.getMemo(), log.getIpAddress(), log.getAt()
 			))
 			.toList();
 
-		return toCursorPageResponse(page, dtos);
+		// 커서 페이지 응답 생성
+		return toCursorPageResponse(dtos, request);
 	}
 
 	/**
@@ -153,27 +73,85 @@ public class ChangeLogServiceImpl implements ChangeLogServiceInterface {
 	 * 포함되지 않은 경우 기본 정렬 필드("at")를 반환
 	 */
 	private String validateSortField(String sortField) {
-		List<String> allowedFields = List.of("at", "ipAddress");
+		List<String> allowedFields = List.of("at", "ipAddress");  // 허용된 정렬 필드 목록
+
+		// 필드가 허용된 목록에 포함되지 않으면 예외를 던짐
 		if (!allowedFields.contains(sortField)) {
-			log.warn("허용되지 않은 정렬 필드, 기본값 'at'로 설정됨");
-			return "at";
+			throw new IllegalArgumentException(
+				"Invalid sort field: " + sortField + ". Allowed fields are: " + allowedFields);
 		}
+
 		return sortField;
 	}
 
-	// responseMapper 내부 구현
-	private CursorPageResponseChangeLogDto toCursorPageResponse(Page<ChangeLog> page, List<ChangeLogDto> dtos) {
-		String nextCursor =
-			page.hasNext() ? String.valueOf(page.getContent().get(page.getContent().size() - 1).getId()) : null;
-		Long nextIdAfter = page.hasNext() ? page.getContent().get(page.getContent().size() - 1).getId() : null;
+	// 정렬 방향 검증 메서드
+	private String validateSortDirection(String sortDirection) {
+		// "asc" 또는 "desc"만 허용
+		if (!"asc".equalsIgnoreCase(sortDirection) && !"desc".equalsIgnoreCase(sortDirection)) {
+			throw new IllegalArgumentException(
+				"Invalid sort direction: " + sortDirection + ". Allowed values are: 'asc' or 'desc'.");
+		}
 
+		return sortDirection;
+	}
+
+	private List<ChangeLog> getChangeLogs(CursorPageRequestChangeLog request, String sortDirection) {
+		if ("asc".equalsIgnoreCase(sortDirection)) {
+			return changeLogRepository.findChangeLogsAsc(
+				request.employeeNumber(),
+				request.memo(),
+				request.ipAddress(),
+				request.type(),
+				request.atFrom(),
+				request.atTo(),
+				request.idAfter(),
+				request.sortField()
+			);
+		} else {
+			return changeLogRepository.findChangeLogsDesc(
+				request.employeeNumber(),
+				request.memo(),
+				request.ipAddress(),
+				request.type(),
+				request.atFrom(),
+				request.atTo(),
+				request.idAfter(),
+				request.sortField()
+			);
+		}
+	}
+
+	// responseMapper 내부 구현
+	// 커서 페이지 응답 생성
+	private CursorPageResponseChangeLogDto toCursorPageResponse(List<ChangeLogDto> dtos,
+		CursorPageRequestChangeLog request) {
+		Long nextIdAfter = null;
+		String nextCursor = null;
+		boolean hasNext = false;
+
+		// dtos가 비어있지 않으면, 마지막 항목의 id를 다음 커서로 설정
+		if (!dtos.isEmpty()) {
+			nextIdAfter = dtos.get(dtos.size() - 1).id();
+			nextCursor = String.valueOf(nextIdAfter);
+
+			// 다음 페이지의 데이터가 있는지 확인
+			List<ChangeLog> nextChangeLogs = getChangeLogs(
+				CursorPageRequestChangeLog.copy(request, nextIdAfter, nextCursor), request.sortDirection());
+			hasNext = !nextChangeLogs.isEmpty();
+		}
+
+		// 전체 데이터 수 계산
+		Long totalCount = changeLogRepository.countChangeLogs(request.employeeNumber(), request.memo(),
+			request.ipAddress(), request.type(), request.atFrom(), request.atTo());
+
+		// CursorPageResponseChangeLogDto 생성
 		return new CursorPageResponseChangeLogDto(
 			dtos,
 			nextCursor,
 			nextIdAfter,
-			page.getSize(),
-			page.getTotalElements(),
-			page.hasNext()
+			request.size(),  // 요청받은 페이지 크기
+			totalCount,  // 전체 항목 수
+			hasNext  // 다음 페이지 존재 여부
 		);
 	}
 
