@@ -30,7 +30,7 @@ public class DepartmentController {
 
 	//부서 등록
 	@PostMapping("")
-	public ResponseEntity<DepartmentDto> createDepartment(DepartmentCreateRequest request) {
+	public ResponseEntity<DepartmentDto> createDepartment(@RequestBody DepartmentCreateRequest request) {
 
 		DepartmentDto response = departmentService.createDepartment(request);
 		return ResponseEntity.ok(response);

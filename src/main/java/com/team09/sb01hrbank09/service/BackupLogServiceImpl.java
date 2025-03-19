@@ -4,9 +4,14 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 
 import com.team09.sb01hrbank09.dto.entityDto.BackupDto;
 import com.team09.sb01hrbank09.dto.request.CursorPageRequestBackupDto;
@@ -17,16 +22,26 @@ import com.team09.sb01hrbank09.entity.File;
 import com.team09.sb01hrbank09.mapper.BackupMapper;
 import com.team09.sb01hrbank09.repository.BackupRepository;
 
-import lombok.RequiredArgsConstructor;
-
 @Service
-@RequiredArgsConstructor
 public class BackupLogServiceImpl implements BackupLogServiceInterface {
 
 	private final BackupRepository backupRepository;
 	private final BackupMapper backupMapper;
 	private final EmployeeServiceInterface employeeService;
 	private final FileServiceInterface fileService;
+
+	@Autowired
+	public BackupLogServiceImpl(
+		@Lazy BackupRepository backupRepository,
+		@Lazy BackupMapper backupMapper,
+		@Lazy EmployeeServiceInterface employeeService,
+		@Lazy FileServiceInterface fileService
+	) {
+		this.backupRepository = backupRepository;
+		this.backupMapper = backupMapper;
+		this.employeeService = employeeService;
+		this.fileService = fileService;
+	}
 
 	@Override
 	@Transactional
@@ -67,21 +82,25 @@ public class BackupLogServiceImpl implements BackupLogServiceInterface {
 	@Override
 	@Transactional(readOnly = true)
 	public CursorPageResponseBackupDto findBackupList(CursorPageRequestBackupDto request) {
-		List<Backup> backups = getBackups(request);
+		Sort sort = Sort.by(Sort.Direction.fromString(request.sortDirection()), request.sortField());
+		Pageable pageable = PageRequest.of(0, request.size(), sort);
 
-		List<BackupDto> backupDtos = backups.stream()
+		Page<Backup> backups = getBackups(request, pageable);
+
+		List<BackupDto> backupDtos = backups.getContent().stream()
 			.map(backupMapper::backupToDto)
 			.toList();
 
 		Long nextIdAfter = null;
 		String nextCursor = null;
 		boolean hasNext = false;
-		if (!backups.isEmpty()) {
-			nextIdAfter = backups.get(backups.size() - 1).getId();
-			nextCursor = String.valueOf(backups.get(backups.size() - 1).getStartedAt());
+		if (!backupDtos.isEmpty()) {
+			nextIdAfter = backupDtos.get(backupDtos.size() - 1).id();
+			nextCursor = String.valueOf(backupDtos.get(backupDtos.size() - 1).startedAt());
 
-			List<Backup> nextBackups = getBackups(CursorPageRequestBackupDto.copy(request, nextIdAfter, nextCursor));
-			hasNext = !CollectionUtils.isEmpty(nextBackups);
+			Page<Backup> nextBackups = getBackups(CursorPageRequestBackupDto.copy(request, nextIdAfter, nextCursor),
+				pageable);
+			hasNext = nextBackups.hasNext();
 		}
 
 		Long totalCount = backupRepository.countBackup(
@@ -101,27 +120,14 @@ public class BackupLogServiceImpl implements BackupLogServiceInterface {
 		);
 	}
 
-	private List<Backup> getBackups(CursorPageRequestBackupDto request) {
-		if (request.sortDirection().equals("asc")) {
-			return backupRepository.findBackupsByCursorOrderByAsc(
-				request.worker(),
-				request.status(),
-				request.startedAtFrom(),
-				request.startedAtTo(),
-				request.idAfter(),
-				request.sortField(),
-				request.size()
-			);
-		}
-
-		return backupRepository.findBackupsByCursorOrderByDesc(
+	private Page<Backup> getBackups(CursorPageRequestBackupDto request, Pageable pageable) {
+		return backupRepository.findBackupsByCursor(
 			request.worker(),
 			request.status(),
 			request.startedAtFrom(),
 			request.startedAtTo(),
 			request.idAfter(),
-			request.sortField(),
-			request.size()
+			pageable
 		);
 	}
 

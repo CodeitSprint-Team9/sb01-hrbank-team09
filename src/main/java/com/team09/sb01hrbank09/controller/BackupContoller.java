@@ -2,11 +2,12 @@ package com.team09.sb01hrbank09.controller;
 
 import java.time.Instant;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,7 +28,7 @@ public class BackupContoller {
 	private final BackupMapper backupMapper;
 
 	@PostMapping
-	public ResponseEntity<BackupDto> createBackup(HttpServletRequest request) {
+	public ResponseEntity<BackupDto> createBackup(@RequestBody HttpServletRequest request) {
 		String ipAddress = request.getHeader("X-Forwarded-For");
 		if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
 			ipAddress = request.getRemoteAddr();
