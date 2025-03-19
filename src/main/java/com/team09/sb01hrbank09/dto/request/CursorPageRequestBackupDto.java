@@ -13,4 +13,17 @@ public record CursorPageRequestBackupDto(
 	String sortField, // 정렬 필드 (startedAt, endedAt, status)
 	String sortDirection // 정렬 방향 (ASC, DESC)
 ) {
+	public static CursorPageRequestBackupDto copy(CursorPageRequestBackupDto dto, Long nextIdAfter, String nextCursor) {
+		return new CursorPageRequestBackupDto(
+			dto.worker,
+			dto.status,
+			dto.startedAtFrom,
+			dto.startedAtTo,
+			nextIdAfter,
+			nextCursor,
+			dto.size,
+			dto.sortField,
+			dto.sortDirection
+		);
+	}
 }
