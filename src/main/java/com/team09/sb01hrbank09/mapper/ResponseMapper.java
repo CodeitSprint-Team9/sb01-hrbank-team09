@@ -38,11 +38,11 @@ public class ResponseMapper {
 
 		return new CursorPageResponseChangeLogDto(
 			page.getContent(),
-			nextCursor != null ? nextCursor.toString() : null,
-			page.getNumber() + 1L,
+			nextCursor != null ? nextCursor.toString() : null, // 커서 값이 있으면 문자열로 변환
+			page.getNumber() + 1L, // 페이지 번호는 1부터 시작
 			page.getSize(),
 			page.getTotalElements(),
-			page.hasNext()
+			page.hasNext() // 다음 페이지가 있는지 여부
 		);
 	}
 

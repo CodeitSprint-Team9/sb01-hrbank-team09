@@ -1,0 +1,242 @@
+package com.team09.sb01hrbank09.service;
+
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.UUID;
+
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.team09.sb01hrbank09.dto.entityDto.EmployeeDistributionDto;
+import com.team09.sb01hrbank09.dto.entityDto.EmployeeDto;
+import com.team09.sb01hrbank09.dto.entityDto.EmployeeTrendDto;
+import com.team09.sb01hrbank09.dto.request.EmployeeCreateRequest;
+import com.team09.sb01hrbank09.dto.request.EmployeeUpdateRequest;
+import com.team09.sb01hrbank09.dto.response.CursorPageResponseEmployeeDto;
+import com.team09.sb01hrbank09.entity.Department;
+import com.team09.sb01hrbank09.entity.Employee;
+import com.team09.sb01hrbank09.entity.Enum.ChangeLogType;
+import com.team09.sb01hrbank09.entity.Enum.EmployeeStatus;
+import com.team09.sb01hrbank09.entity.File;
+import com.team09.sb01hrbank09.event.EmployeeEvent;
+import com.team09.sb01hrbank09.mapper.EmployeeMapper;
+import com.team09.sb01hrbank09.repository.EmployeeRepository;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class EmployeeServiceImpl implements EmployeeServiceInterface {
+
+	private final EmployeeRepository employeeRepository;
+	private final DepartmentServiceInterface departmentServiceInterface;
+	private final FileServiceInterface fileServiceInterface;
+	private final ChangeLogServiceInterface changeLogServiceInterface;
+	private final EmployeeMapper employeeMapper;
+	private final ApplicationEventPublisher eventPublisher;
+
+	@Override
+	@Transactional
+	public EmployeeDto creatEmployee(EmployeeCreateRequest employeeCreateRequest, MultipartFile profileImg) {
+		Department usingDepartment = departmentServiceInterface.findDepartmentEntityById(
+			employeeCreateRequest.departmentId());
+		if (usingDepartment == null) {
+			throw new NoSuchElementException("Department 아이디가 존재하지 않음");
+		}
+
+		File file = null;
+		if (profileImg != null) {
+			file = fileServiceInterface.createFile(profileImg);
+		}
+
+		String uniquePart = UUID.randomUUID().toString().replaceAll("-", "").substring(0, 14);
+		String employeeNumber = "EMP-" + "년도" + uniquePart;
+		Employee employee = Employee.createEmployee(employeeCreateRequest.name(), employeeCreateRequest.email(),
+			employeeNumber, employeeCreateRequest.position(),
+			employeeCreateRequest.hireDate(), EmployeeStatus.ACTIVE, file, usingDepartment);
+
+		//만들어지면 넣기
+		String memo;
+		if (employeeCreateRequest.memo() == null) {
+			memo = "신규 직원 등록";
+		} else {
+			memo = employeeCreateRequest.memo();
+		}
+		log.info("이벤트 발행시작...");
+		//이벤트 발행 (before = null, after = 새 Employee)
+		eventPublisher.publishEvent(new EmployeeEvent(
+			ChangeLogType.CREATED, employee.getEmployeeNumber(), memo, "127.0.0.1", null,
+			employeeMapper.employeeToDto(employee)
+		));
+		log.info("change-logs 생성 완료");
+		return employeeMapper.employeeToDto(employeeRepository.save(employee));
+	}
+
+	@Override
+	@Transactional
+	public EmployeeDto findEmployeeById(Long Id) {
+		Employee employee = employeeRepository.findById(Id)
+			.orElseThrow(() -> new NoSuchElementException("Message with id " + Id + " not found"));
+		return employeeMapper.employeeToDto(employee);
+	}
+
+	@Override
+	@Transactional
+	public CursorPageResponseEmployeeDto findEmployeeList(String nameOrEmail, String employeeNumber,
+		String departmentName, String position, String hireDateFrom, String hireDateTo, String status, Long idAfter,
+		String cursor, int size, String sortField, String sortDirection) {
+		return null;
+	}
+
+	@Override
+	@Transactional
+	public boolean deleteEmployee(Long id) {
+		if (employeeRepository.existsById(id)) {
+			Employee employee = employeeRepository.findById(id).get();
+			//추가 코드
+			EmployeeDto beforeEmployee = employeeMapper.employeeToDto(employee);
+			fileServiceInterface.deleteFile(employee.getFile());
+			employeeRepository.deleteById(id);
+			// 이벤트 발행 (before = 삭제된 Employee, after = null)
+			log.info("이벤트 발행시작...");
+			eventPublisher.publishEvent(new EmployeeEvent(
+				ChangeLogType.DELETED, employee.getEmployeeNumber(), "직원 삭제", "127.0.0.1", beforeEmployee, null
+			));
+			log.info("change-logs 생성 완료");
+			return true;
+		}
+		return false;
+	}
+
+	@Override
+	@Transactional
+	public EmployeeDto updateEmployee(Long id, EmployeeUpdateRequest employeeUpdateRequest, MultipartFile profileImg) {
+
+		Employee employee = employeeRepository.findById(id)
+
+			.orElseThrow(() -> new NoSuchElementException("Message with id " + id + " not found"));
+		File file = null;
+
+		// 변경 전 상태 저장 (깊은 복사)
+		EmployeeDto beforeEmployee = employeeMapper.employeeToDto(employee);
+
+		Department usingDepartment = departmentServiceInterface.findDepartmentEntityById(
+			employeeUpdateRequest.departmentId());
+		if (usingDepartment == null) {
+			throw new NoSuchElementException("Department 아이디가 존재하지 않음");
+		}
+		EmployeeStatus status = EmployeeStatus.valueOf(employeeUpdateRequest.status().toUpperCase());
+
+		employee.updateName(employeeUpdateRequest.name());
+		employee.updateEmail(employeeUpdateRequest.email());
+		employee.updateDepartment(usingDepartment);
+		employee.updatePosition(employeeUpdateRequest.position());
+		employee.updateHireDateFrom(employeeUpdateRequest.hireDate());
+		employee.updateStatus(status);
+
+		if (profileImg != null) {
+			fileServiceInterface.deleteFile(employee.getFile());
+			file = fileServiceInterface.createFile(profileImg);
+			employee.updateFile(file);
+		}
+
+		//만들어지면 넣기(dto변환)
+		EmployeeDto afterEmployee = employeeMapper.employeeToDto(employee);
+		String memo;
+		if (employeeUpdateRequest.memo() == null) {
+			memo = "직원 정보 수정";
+		} else {
+			memo = employeeUpdateRequest.memo();
+		}
+		// 이벤트 발행 (before = 기존 Employee, after = 수정된 Employee)
+		log.info("이벤트 발행시작...");
+		eventPublisher.publishEvent(new EmployeeEvent(
+			ChangeLogType.UPDATED, employee.getEmployeeNumber(), memo, "127.0.0.1",
+			beforeEmployee, afterEmployee
+		));
+		log.info("change-logs 생성 완료");
+		return employeeMapper.employeeToDto(employee);
+	}
+
+	@Override
+	@Transactional
+	public List<EmployeeTrendDto> getEmployeeTrend(Instant startedAt, Instant endedAt, String gap) {
+
+		List<Object[]> results = employeeRepository.findEmployeeTrend(startedAt, endedAt, gap);
+
+		List<EmployeeTrendDto> trends = new ArrayList<>();
+		long previousCount = 0;
+
+		for (Object[] row : results) {
+			Instant date = ((Timestamp)row[0]).toInstant();
+			long count = ((Number)row[1]).longValue();
+
+			long change = count - previousCount;
+			double changeRate = (previousCount == 0) ? 0.0 : (change * 100.0 / previousCount);
+			trends.add(new EmployeeTrendDto(date, count, change, changeRate));
+			previousCount = count;
+		}
+
+		return trends;
+	}
+
+	@Override
+	@Transactional
+	public List<EmployeeDistributionDto> getEmployeeDistributaion(String groupBy, String status) {
+
+		List<EmployeeDistributionDto> distribution;
+		if (groupBy.equals("position")) {
+			return convertDistributionPosition(status);
+		} else if (groupBy.equals("department")) {
+			return convertDistributionDepartment(status);
+		} else {
+			return convertDistributionDepartment(status);
+		}
+	}
+
+	@Override
+	@Transactional
+	public Long countEmployee(String status, Instant startedAt, Instant endedAt) {
+		EmployeeStatus findStatus = EmployeeStatus.valueOf(status.toUpperCase());
+		return employeeRepository.countByStatusAndCreatedAtBetween(findStatus, startedAt, endedAt);
+	}
+
+	private List<EmployeeDistributionDto> convertDistributionPosition(String status) {
+		List<EmployeeDistributionDto> distribution = new ArrayList<>();
+		List<Object[]> results = employeeRepository.findDistributatinPosition(
+			EmployeeStatus.valueOf(status.toUpperCase()));
+		for (Object[] row : results) {
+			String positionName = (String)row[0];
+			Long totalEmployees = (Long)row[1];
+			Long activeEmployees = (Long)row[2];
+			double ratio = (activeEmployees == 0) ? 0.0 : ((double)totalEmployees * 100 / activeEmployees);
+			distribution.add(new EmployeeDistributionDto(positionName, totalEmployees,
+				ratio));
+		}
+		return distribution;
+	}
+
+	private List<EmployeeDistributionDto> convertDistributionDepartment(String status) {
+		List<EmployeeDistributionDto> distribution = new ArrayList<>();
+		List<Object[]> results = employeeRepository.findDistributatinPosition(
+			EmployeeStatus.valueOf(status.toUpperCase()));
+		for (Object[] row : results) {
+			Long departmentId = (Long)row[0];
+			Long totalEmployees = (Long)row[1];
+			Long activeEmployees = (Long)row[2];
+			double ratio = (activeEmployees == 0) ? 0.0 : ((double)totalEmployees * 100 / activeEmployees);
+			String departmentName = departmentServiceInterface.findDepartmentById(departmentId).name();
+			distribution.add(new EmployeeDistributionDto(departmentName, totalEmployees,
+				ratio));
+		}
+		return distribution;
+	}
+
+}

@@ -1,6 +1,7 @@
 package com.team09.sb01hrbank09.service;
 
 import java.time.Instant;
+import java.util.List;
 
 import org.springframework.web.multipart.MultipartFile;
 
@@ -26,12 +27,12 @@ public interface EmployeeServiceInterface {
 	EmployeeDto updateEmployee(Long id, EmployeeUpdateRequest employeeUpdateRequest, MultipartFile profileImg);
 
 	//새로운Dto 직원수 추이
-	EmployeeTrendDto getEmployeeTrend(Instant startedAt, Instant endedAt, String gap);
+	List<EmployeeTrendDto> getEmployeeTrend(Instant startedAt, Instant endedAt, String gap);
 
 	//새로운Dto 직원 분포 조회
-	EmployeeDistributionDto getEmployeeDistributaion(String groupBy, String status);
+	List<EmployeeDistributionDto> getEmployeeDistributaion(String groupBy, String status);
 
 	//직원 수 조회
-	int countEmployee(String status, Instant startedAt, Instant endedAt);
+	Long countEmployee(String status, Instant startedAt, Instant endedAt);
 
 }

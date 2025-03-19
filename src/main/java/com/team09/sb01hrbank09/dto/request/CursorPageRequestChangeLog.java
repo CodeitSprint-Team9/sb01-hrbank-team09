@@ -2,11 +2,9 @@ package com.team09.sb01hrbank09.dto.request;
 
 import java.time.Instant;
 
-import com.team09.sb01hrbank09.entity.Enum.ChangeLogType;
-
 public record CursorPageRequestChangeLog(
 	String employeeNumber,
-	ChangeLogType type,
+	String type,
 	String memo,
 	String ipAddress,
 	Instant atFrom,
@@ -17,4 +15,19 @@ public record CursorPageRequestChangeLog(
 	String sortField,
 	String sortDirection
 ) {
+	public static CursorPageRequestChangeLog copy(CursorPageRequestChangeLog dto, Long nextIdAfter, String nextCursor) {
+		return new CursorPageRequestChangeLog(
+			dto.employeeNumber(),
+			dto.type(),
+			dto.memo(),
+			dto.ipAddress(),
+			dto.atFrom(),
+			dto.atTo(),
+			nextIdAfter,  // nextIdAfter 값 설정
+			nextCursor,   // nextCursor 값 설정
+			dto.size(),
+			dto.sortField(),
+			dto.sortDirection()
+		);
+	}
 }

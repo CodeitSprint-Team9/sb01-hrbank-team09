@@ -46,5 +46,4 @@ public interface DepartmentRepository extends JpaRepository<Department, Long> {
 			String nameSearchTerm, String descriptionSearchTerm, Pageable pageable
 	);
 
-
 }
