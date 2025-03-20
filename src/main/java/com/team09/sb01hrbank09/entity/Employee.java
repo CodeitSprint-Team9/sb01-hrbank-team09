@@ -5,6 +5,7 @@ import static jakarta.persistence.FetchType.*;
 import static jakarta.persistence.GenerationType.*;
 
 import java.time.Instant;
+import java.time.LocalDate;
 
 import com.team09.sb01hrbank09.entity.Enum.EmployeeStatus;
 
@@ -44,7 +45,7 @@ public class Employee {
 	private String position;
 
 	@Column(nullable = false)
-	private Instant hireDateFrom;
+	private LocalDate hireDateFrom;
 
 	@Enumerated(STRING)
 	@Column(nullable = false, length = 20)
@@ -60,7 +61,7 @@ public class Employee {
 
 
 	private Employee(String name, String email, String employeeNumber, String position
-		, Instant hireDateFrom, EmployeeStatus status, File file, Department department) {
+		, LocalDate hireDateFrom, EmployeeStatus status, File file, Department department) {
 		this.name = name;
 		this.email = email;
 		this.employeeNumber = employeeNumber;
@@ -72,7 +73,7 @@ public class Employee {
 	}
 
 	public static Employee createEmployee(String name, String email, String employeeNumber, String position,
-		Instant hireDateFrom, EmployeeStatus status, File file, Department department) {
+		LocalDate hireDateFrom, EmployeeStatus status, File file, Department department) {
 		return new Employee(name, email, employeeNumber, position, hireDateFrom, status, file, department);
 	}
 
@@ -88,7 +89,7 @@ public class Employee {
 		this.name = name;
 	}
 
-	public void updateHireDateFrom(Instant hireDateFrom) {
+	public void updateHireDateFrom(LocalDate hireDateFrom) {
 		this.hireDateFrom = hireDateFrom;
 	}
 
