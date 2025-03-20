@@ -96,7 +96,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 			employeeNumber, employeeCreateRequest.position(),
 			employeeCreateRequest.hireDate(), EmployeeStatus.ACTIVE, file, usingDepartment);
 
-		EmployeeDto newEmployee=employeeMapper.employeeToDto(employee);
+		//EmployeeDto newEmployee=employeeMapper.employeeToDto(employee);
 		//만들어지면 넣기
 		// updateTime = Instant.now();
 		// String memo;
