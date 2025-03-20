@@ -30,6 +30,8 @@ public class BackupLogServiceImpl implements BackupLogServiceInterface {
 	private final EmployeeServiceInterface employeeService;
 	private final FileServiceInterface fileService;
 
+	private Instant lastBackupTime = Instant.EPOCH;
+
 	@Autowired
 	public BackupLogServiceImpl(
 		@Lazy BackupRepository backupRepository,
@@ -46,25 +48,29 @@ public class BackupLogServiceImpl implements BackupLogServiceInterface {
 	@Override
 	@Transactional
 	public BackupDto createBackup(String worker) {
-		Backup latestCompletedBackup = backupRepository.findFirstByStatusOrderByStartedAtDesc(BackupStatus.COMPLETED)
-			.orElse(null);
 
-		Instant lastBackupTime = Instant.EPOCH;
-		if (latestCompletedBackup != null) {
-			lastBackupTime = latestCompletedBackup.getStartedAt();
-		}
-
-		Instant lastEmployeeUpdate = getUpdateTime();
 		Backup backup = Backup.createBackup(worker);
+
+		Instant lastEmployeeUpdate = employeeService.getUpdateTime();
+
+		backupRepository.saveAndFlush(backup);
+
 		if (lastEmployeeUpdate.isAfter(lastBackupTime)) {
 			try {
 				File backupFile = fileService.createCsvBackupFile();
-				backup.setStatusCompleted(backupFile);
+
+				if (backupFile.getType().equals("csv")) {
+					backup.setStatusCompleted(backupFile);
+				} else if (backupFile.getType().equals("log")) {
+					backup.setStatusFailed(backupFile);
+				}
 			} catch (IOException e) {
 				throw new RuntimeException("백업 파일 및 로그 파일 생성 실패");
 			}
 
 			backupRepository.save(backup);
+
+			lastBackupTime = lastEmployeeUpdate;
 
 			return backupMapper.backupToDto(backup);
 		}
@@ -73,10 +79,6 @@ public class BackupLogServiceImpl implements BackupLogServiceInterface {
 		backupRepository.save(backup);
 
 		return backupMapper.backupToDto(backup);
-	}
-
-	private synchronized Instant getUpdateTime() {
-		return employeeService.getUpdateTime();
 	}
 
 	@Override
@@ -98,9 +100,10 @@ public class BackupLogServiceImpl implements BackupLogServiceInterface {
 			nextIdAfter = backupDtos.get(backupDtos.size() - 1).id();
 			nextCursor = String.valueOf(backupDtos.get(backupDtos.size() - 1).startedAt());
 
+			// hasNext = backups.hasNext();
 			Page<Backup> nextBackups = getBackups(CursorPageRequestBackupDto.copy(request, nextIdAfter, nextCursor),
 				pageable);
-			hasNext = nextBackups.hasNext();
+			hasNext = !nextBackups.isEmpty();
 		}
 
 		Long totalCount = backupRepository.countBackup(
@@ -121,7 +124,18 @@ public class BackupLogServiceImpl implements BackupLogServiceInterface {
 	}
 
 	private Page<Backup> getBackups(CursorPageRequestBackupDto request, Pageable pageable) {
-		return backupRepository.findBackupsByCursor(
+		if (request.sortDirection().equals("asc")) {
+			return backupRepository.findBackupsByCursorOrderByIdAsc(
+				request.worker(),
+				request.status(),
+				request.startedAtFrom(),
+				request.startedAtTo(),
+				request.idAfter(),
+				pageable
+			);
+		}
+
+		return backupRepository.findBackupsByCursorOrderByIdDesc(
 			request.worker(),
 			request.status(),
 			request.startedAtFrom(),

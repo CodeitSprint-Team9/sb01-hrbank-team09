@@ -9,7 +9,7 @@ import com.team09.sb01hrbank09.entity.Backup;
 @Mapper(componentModel = "spring")
 public interface BackupMapper {
 
-	@Mapping(source = "fileId.id", target = "fileId")
+	@Mapping(source = "file.id", target = "fileId")
 	BackupDto backupToDto(Backup backup);
 
 	//Backup dtoToBackup(BackupDto backupDto);
