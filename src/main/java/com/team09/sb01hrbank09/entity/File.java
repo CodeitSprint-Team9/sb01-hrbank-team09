@@ -67,7 +67,7 @@ public class File {
 
 	public static File createImgFile(String name, Long size) {
 		String pathImg = Paths.get(System.getProperty("user.dir"), "files", "img", name).toString();
-		return new File(name, "img", size, pathImg);
+			return new File(name, "img", size, pathImg);
 	}
 
 	public static File createCsvFile(String filename, Long size, Path path) {

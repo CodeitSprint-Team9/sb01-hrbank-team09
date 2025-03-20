@@ -73,7 +73,7 @@ public class FileServiceImpl implements FileServiceInterface {
 				 .withHeader("ID", "EmployeeNumber", "Name", "Email", "DepartmentName",
 					 "Position", "HireDate", "Status"))) {
 
-			int batchSize = 10000;
+			int batchSize = 10000;//5000?
 			int count = 0;
 
 			for (EmployeeDto employee : data) {
@@ -146,6 +146,12 @@ public class FileServiceImpl implements FileServiceInterface {
 			return true;
 		}
 		return false;
+	}
+
+	@Override
+	public File findById(Long Id) {
+		return fileRepository.findById(Id).
+			orElseThrow(() -> new NoSuchElementException("file with id " + Id + " not found"));
 	}
 
 	private Path logError(Path filePath, IOException e) {

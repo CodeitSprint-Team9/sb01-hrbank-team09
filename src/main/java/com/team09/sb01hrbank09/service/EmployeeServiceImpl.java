@@ -120,7 +120,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 	@Transactional(readOnly = true)
 	public EmployeeDto findEmployeeById(Long Id) {
 		Employee employee = employeeRepository.findById(Id)
-			.orElseThrow(() -> new NoSuchElementException("Message with id " + Id + " not found"));
+			.orElseThrow(() -> new NoSuchElementException("employee with id " + Id + " not found"));
 		return employeeMapper.employeeToDto(employee);
 	}
 
@@ -235,8 +235,6 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 		EmployeeDto newEmployee=employeeMapper.employeeToDto(employee);
 		File file = null;
 
-		// 변경 전 상태 저장 (깊은 복사)
-		EmployeeDto beforeEmployee = employeeMapper.employeeToDto(employee);
 
 		Department usingDepartment = departmentServiceInterface.findDepartmentEntityById(
 			employeeUpdateRequest.departmentId());
@@ -253,24 +251,21 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 		employee.updateStatus(status);
 
 		if (profileImg != null) {
-			fileServiceInterface.deleteFile(employee.getFile());
+			if(employee.getFile()!=null){
+				File oldFile=fileServiceInterface.findById(employee.getFile().getId());
+				employee.updateFile(null);
+				fileServiceInterface.deleteFile(oldFile);
+			}
 			file = fileServiceInterface.createImgFile(profileImg);
 			employee.updateFile(file);
 		}
-		EmployeeDto oldEmployee=employeeMapper.employeeToDto(employee);
-		//만들어지면 넣기
-		//changeLogServiceInterface.createChangeLog();
+		else{
+			employee.updateFile(file);
+		}
 
 		updateTime = Instant.now();
 
 		//만들어지면 넣기(dto변환)
-		EmployeeDto afterEmployee = employeeMapper.employeeToDto(employee);
-		String memo;
-		if (employeeUpdateRequest.memo() == null) {
-			memo = "직원 정보 수정";
-		} else {
-			memo = employeeUpdateRequest.memo();
-		}
 		// 이벤트 발행 (before = 기존 Employee, after = 수정된 Employee)
 		// log.info("이벤트 발행시작...");
 		// eventPublisher.publishEvent(new EmployeeEvent(
