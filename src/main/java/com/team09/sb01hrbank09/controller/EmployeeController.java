@@ -41,15 +41,15 @@ public class EmployeeController {
 
 	@PostMapping
 	public ResponseEntity<EmployeeDto> creatEmployee(
-		@RequestPart("employeeCreateRequest") EmployeeCreateRequest employeeCreateRequest,
-		@RequestPart(value = "profile", required = false) MultipartFile profileImage,
+		@RequestPart("employee") EmployeeCreateRequest employee,
+		@RequestPart(value = "profile", required = false) MultipartFile profile,
 		HttpServletRequest request
 	) throws IOException {
 		String ipAddress = request.getHeader("X-Forwarded-For");
 		if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
 			ipAddress = request.getRemoteAddr();
 		}
-		EmployeeDto response = employeeServiceInterface.creatEmployee(employeeCreateRequest, profileImage, ipAddress);
+		EmployeeDto response = employeeServiceInterface.creatEmployee(employee, profile, ipAddress);
 
 		return ResponseEntity.ok(response);
 	}
@@ -111,7 +111,7 @@ public class EmployeeController {
 
 	@PatchMapping("/{id}")
 	ResponseEntity<EmployeeDto> updateEmployee(@PathVariable Long id,
-		@RequestPart("employeeUpdateRequest") EmployeeUpdateRequest employeeUpdateRequest,
+		@RequestPart("employee") EmployeeUpdateRequest employeeUpdateRequest,
 		@RequestPart(value = "profile", required = false) MultipartFile profileImage,
 		HttpServletRequest request) throws IOException {
 		String ipAddress = request.getHeader("X-Forwarded-For");
