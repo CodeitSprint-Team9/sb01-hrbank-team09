@@ -42,6 +42,7 @@ import com.team09.sb01hrbank09.event.EmployeeEvent;
 import com.team09.sb01hrbank09.mapper.EmployeeMapper;
 import com.team09.sb01hrbank09.repository.EmployeeRepository;
 
+import jakarta.persistence.Tuple;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -93,7 +94,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 			employeeNumber, employeeCreateRequest.position(),
 			employeeCreateRequest.hireDate(), EmployeeStatus.ACTIVE, file, usingDepartment);
 
-		EmployeeDto newEmployee = employeeMapper.employeeToDto(employee);
+		//EmployeeDto newEmployee=employeeMapper.employeeToDto(employee);
 		//만들어지면 넣기
 		updateTime = Instant.now();
 		String memo;
@@ -109,6 +110,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 		);
 		log.info("change-logs 생성 완료");
 
+		usingDepartment.increaseCount();
 		return employeeMapper.employeeToDto(employeeRepository.save(employee));
 	}
 
@@ -116,7 +118,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 	@Transactional(readOnly = true)
 	public EmployeeDto findEmployeeById(Long Id) {
 		Employee employee = employeeRepository.findById(Id)
-			.orElseThrow(() -> new NoSuchElementException("Message with id " + Id + " not found"));
+			.orElseThrow(() -> new NoSuchElementException("employee with id " + Id + " not found"));
 		return employeeMapper.employeeToDto(employee);
 	}
 
@@ -205,6 +207,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 
 			Employee employee = employeeRepository.findById(id).get();
 			fileServiceInterface.deleteFile(employee.getFile());
+			employee.getDepartment().decreaseCount();
 			employeeRepository.deleteById(id);
 			//로그작업
 			updateTime = Instant.now();
@@ -232,8 +235,6 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 		EmployeeDto newEmployee = employeeMapper.employeeToDto(employee);
 		File file = null;
 
-		// 변경 전 상태 저장 (깊은 복사)
-		EmployeeDto beforeEmployee = employeeMapper.employeeToDto(employee);
 
 		Department usingDepartment = departmentServiceInterface.findDepartmentEntityById(
 			employeeUpdateRequest.departmentId());
@@ -241,6 +242,8 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 			throw new NoSuchElementException("Department 아이디가 존재하지 않음");
 		}
 		EmployeeStatus status = EmployeeStatus.valueOf(employeeUpdateRequest.status().toUpperCase());
+
+		employee.getDepartment().decreaseCount();
 
 		employee.updateName(employeeUpdateRequest.name());
 		employee.updateEmail(employeeUpdateRequest.email());
@@ -250,10 +253,20 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 		employee.updateStatus(status);
 
 		if (profileImg != null) {
-			fileServiceInterface.deleteFile(employee.getFile());
+			if(employee.getFile()!=null){
+				File oldFile=fileServiceInterface.findById(employee.getFile().getId());
+				employee.updateFile(null);
+				fileServiceInterface.deleteFile(oldFile);
+			}
 			file = fileServiceInterface.createImgFile(profileImg);
 			employee.updateFile(file);
 		}
+		else{
+			employee.updateFile(file);
+		}
+		employee.getDepartment().increaseCount();
+		updateTime = Instant.now();
+    
 		EmployeeDto oldEmployee = employeeMapper.employeeToDto(employee);
 		//만들어지면 넣기
 		//changeLogServiceInterface.createChangeLog();
@@ -281,31 +294,36 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 
 	@Override
 	@Transactional(readOnly = true)
-	public List<EmployeeTrendDto> getEmployeeTrend(Instant startedAt, Instant endedAt, String gap) {
+	public List<EmployeeTrendDto> getEmployeeTrend(LocalDate startedAt, LocalDate endedAt, String gap) {
 
 		List<Object[]> results = employeeRepository.findEmployeeTrend(startedAt, endedAt, gap);
+		List<EmployeeTrendDto> trendList = new ArrayList<>();
+		Long previousCount = null;
 
-		List<EmployeeTrendDto> trends = new ArrayList<>();
-		long previousCount = 0;
+		for (Object[] result : results) {
+			Instant periodDate;
 
-		for (Object[] row : results) {
-			Instant date = ((Timestamp)row[0]).toInstant();
-			long count = ((Number)row[1]).longValue();
+			if (result[0] instanceof Timestamp) {
+				periodDate = ((Timestamp) result[0]).toInstant();
+			} else {
+				periodDate = (Instant) result[0];
+			}
+			Long count = ((Number) result[1]).longValue();
+			Long change = (previousCount == null) ? 0L : count - previousCount;
+			Double changeRate = (previousCount == null || previousCount == 0L)
+				? 0.0
+				: (double) change / previousCount;
 
-			long change = count - previousCount;
-			double changeRate = (previousCount == 0) ? 0.0 : (change * 100.0 / previousCount);
-			trends.add(new EmployeeTrendDto(date, count, change, changeRate));
+			trendList.add(new EmployeeTrendDto(periodDate, count, change, changeRate));
 			previousCount = count;
 		}
-
-		return trends;
+		return trendList;
 	}
 
 	@Override
 	@Transactional(readOnly = true)
 	public List<EmployeeDistributionDto> getEmployeeDistributaion(String groupBy, String status) {
 
-		List<EmployeeDistributionDto> distribution;
 		if (groupBy.equals("position")) {
 			return convertDistributionPosition(status);
 		} else if (groupBy.equals("department")) {
@@ -317,7 +335,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 
 	@Override
 	@Transactional(readOnly = true)
-	public Long countEmployee(String status, Instant startedAt, Instant endedAt) {
+	public Long countEmployee(String status, LocalDate startedAt, LocalDate endedAt) {
 		boolean isValidStatus = Arrays.stream(EmployeeStatus.values())
 			.anyMatch(e -> e.name().equalsIgnoreCase(status));
 		EmployeeStatus findStatus=null;
