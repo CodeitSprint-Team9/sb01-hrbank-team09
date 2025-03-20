@@ -49,7 +49,6 @@ public class EmployeeController {
 		if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
 			ipAddress = request.getRemoteAddr();
 		}
-		System.out.println(ipAddress);
 		EmployeeDto response = employeeServiceInterface.creatEmployee(employeeCreateRequest, profileImage, ipAddress);
 
 		return ResponseEntity.ok(response);
