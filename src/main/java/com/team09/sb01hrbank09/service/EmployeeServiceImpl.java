@@ -101,7 +101,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 		log.info("changelog 생성 시작...");
 		changeLogServiceInterface.createChangeLog(
 			ChangeLogType.CREATED, employee.getEmployeeNumber(), memo, ipAddress, null,
-			employeeMapper.employeeToDto(employee)
+			newEmployee
 		);
 		log.info("change-logs 생성 완료");
 

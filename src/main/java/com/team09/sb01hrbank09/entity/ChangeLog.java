@@ -68,10 +68,4 @@ public class ChangeLog {
 		return new ChangeLog(type, employeeNumber, ipAddress, memo, beforeState, afterState);
 	}
 
-	//메모 없을경우
-	public static ChangeLog createChangeLog(ChangeLogType type, String employeeNumber, String ipAddress,
-		String beforeState, String afterState) {
-		return new ChangeLog(type, employeeNumber, ipAddress, null, beforeState, afterState);
-	}
-
 }
