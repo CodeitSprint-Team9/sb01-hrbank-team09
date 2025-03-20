@@ -42,6 +42,7 @@ import com.team09.sb01hrbank09.event.EmployeeEvent;
 import com.team09.sb01hrbank09.mapper.EmployeeMapper;
 import com.team09.sb01hrbank09.repository.EmployeeRepository;
 
+import jakarta.persistence.Tuple;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -286,21 +287,27 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 	public List<EmployeeTrendDto> getEmployeeTrend(Instant startedAt, Instant endedAt, String gap) {
 
 		List<Object[]> results = employeeRepository.findEmployeeTrend(startedAt, endedAt, gap);
+		List<EmployeeTrendDto> trendList = new ArrayList<>();
+		Long previousCount = null;
 
-		List<EmployeeTrendDto> trends = new ArrayList<>();
-		long previousCount = 0;
+		for (Object[] result : results) {
+			Instant periodDate;
 
-		for (Object[] row : results) {
-			Instant date = ((Timestamp)row[0]).toInstant();
-			long count = ((Number)row[1]).longValue();
+			if (result[0] instanceof Timestamp) {
+				periodDate = ((Timestamp) result[0]).toInstant();
+			} else {
+				periodDate = (Instant) result[0];
+			}
+			Long count = ((Number) result[1]).longValue();
+			Long change = (previousCount == null) ? 0L : count - previousCount;
+			Double changeRate = (previousCount == null || previousCount == 0L)
+				? 0.0
+				: (double) change / previousCount;
 
-			long change = count - previousCount;
-			double changeRate = (previousCount == 0) ? 0.0 : (change * 100.0 / previousCount);
-			trends.add(new EmployeeTrendDto(date, count, change, changeRate));
+			trendList.add(new EmployeeTrendDto(periodDate, count, change, changeRate));
 			previousCount = count;
 		}
-
-		return trends;
+		return trendList;
 	}
 
 	@Override
