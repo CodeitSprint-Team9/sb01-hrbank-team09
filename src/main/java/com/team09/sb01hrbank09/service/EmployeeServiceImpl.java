@@ -141,11 +141,20 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 			hireDateFromInstant != null ? LocalDateTime.from(hireDateFromInstant) : null;
 		LocalDateTime hireDateToTimestamp = hireDateToInstant != null ? LocalDateTime.from(hireDateToInstant) : null;
 
+		EmployeeStatus employeeStatus = null;
+		if (status != null) {
+			try {
+				employeeStatus = EmployeeStatus.valueOf(status.toUpperCase()); // Enum 변환
+			} catch (IllegalArgumentException e) {
+				throw new NoSuchElementException("Invalid status value: " + status); // 예외 처리
+			}
+		}
+
 		// 직원 목록을 필터링하여 조회 (필터 및 페이징 처리)
 		Page<Employee> employeePage = employeeRepository.findEmployeesWithFilters(
 			nameOrEmail, employeeNumber, departmentName, position,
 			hireDateFromTimestamp, hireDateToTimestamp,
-			status, idAfter, pageable
+			employeeStatus, idAfter, pageable
 		);
 
 		// 페이지네이션 처리된 직원 목록을 DTO로 변환
