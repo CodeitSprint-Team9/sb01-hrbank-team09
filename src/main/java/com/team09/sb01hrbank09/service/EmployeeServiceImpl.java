@@ -34,6 +34,7 @@ import com.team09.sb01hrbank09.dto.request.EmployeeUpdateRequest;
 import com.team09.sb01hrbank09.dto.response.CursorPageResponseEmployeeDto;
 import com.team09.sb01hrbank09.entity.Department;
 import com.team09.sb01hrbank09.entity.Employee;
+import com.team09.sb01hrbank09.entity.Enum.ChangeLogType;
 import com.team09.sb01hrbank09.entity.Enum.EmployeeStatus;
 import com.team09.sb01hrbank09.entity.File;
 import com.team09.sb01hrbank09.mapper.EmployeeMapper;
@@ -63,7 +64,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 		this.departmentServiceInterface = departmentServiceInterface;
 		this.fileServiceInterface = fileServiceInterface;
 		this.changeLogServiceInterface = changeLogServiceInterface;
-		this.employeeMapper = employeeMapper
+		this.employeeMapper = employeeMapper;
 	}
 
 	private Instant updateTime = Instant.EPOCH;
@@ -92,7 +93,6 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 
 		//EmployeeDto newEmployee=employeeMapper.employeeToDto(employee);
 		//만들어지면 넣기
-		updateTime = Instant.now();
 		String memo;
 		if (employeeCreateRequest.memo() == null) {
 			memo = "신규 직원 등록";
@@ -107,6 +107,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 		log.info("change-logs 생성 완료");
 
 		usingDepartment.increaseCount();
+		this.updateTime = Instant.now();
 		return employeeMapper.employeeToDto(employeeRepository.save(employee));
 	}
 
@@ -207,8 +208,9 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 			fileServiceInterface.deleteFile(employee.getFile());
 			employee.getDepartment().decreaseCount();
 			employeeRepository.deleteById(id);
+			this.updateTime = Instant.now();
 			//로그작업
-			updateTime = Instant.now();
+
 
 			log.info("이벤트 발행시작...");
 			changeLogServiceInterface.createChangeLog(
@@ -261,15 +263,8 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 			employee.updateFile(file);
 		}
 		employee.getDepartment().increaseCount();
-		updateTime = Instant.now();
-    
-		EmployeeDto oldEmployee = employeeMapper.employeeToDto(employee);
-		//만들어지면 넣기
-		//changeLogServiceInterface.createChangeLog();
+		this.updateTime = Instant.now();
 
-		updateTime = Instant.now();
-
-		//만들어지면 넣기(dto변환)
 		EmployeeDto afterEmployee = employeeMapper.employeeToDto(employee);
 		String memo;
 		if (employeeUpdateRequest.memo() == null) {
@@ -281,7 +276,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 		log.info("Change-logs 생성중...");
 		changeLogServiceInterface.createChangeLog(
 			ChangeLogType.CREATED, employee.getEmployeeNumber(), "직원 삭제", ipAddress,
-			beforeEmployee, afterEmployee
+			newEmployee, afterEmployee
 		);
 		log.info("change-logs 생성 완료");
 

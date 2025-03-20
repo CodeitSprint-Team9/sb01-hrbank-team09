@@ -40,17 +40,13 @@ public class FileServiceImpl implements FileServiceInterface {
 
 	@Override
 	@Transactional(readOnly = true)
-	public String downloadFile(Long id) throws IOException {
+	public byte[] downloadFile(Long id) throws IOException {
 		File file = fileRepository.findById(id)
 			.orElseThrow(() -> new NoSuchElementException("file with id " + id + " not found"));
 		Path getFile = file.getFilePath();
 		if (Files.exists(getFile)) {
 			byte[] fileContent = Files.readAllBytes(getFile);
-			if (file.getType().equalsIgnoreCase("txt") || file.getType().equalsIgnoreCase("csv") || file.getType().equalsIgnoreCase("log")) {
-				return new String(fileContent, StandardCharsets.UTF_8);
-			} else {
-				return Base64.getEncoder().encodeToString(fileContent);
-			}
+			return fileContent;
 		} else {
 			throw new FileNotFoundException("File not found at path: " + getFile);
 		}
@@ -63,10 +59,11 @@ public class FileServiceImpl implements FileServiceInterface {
 		List<EmployeeDto> data = employeeServiceInterface.getEmployeeAllList();
 
 		String directoryPath = System.getProperty("user.dir") + "/files/csv";
+		Files.createDirectories(Paths.get(directoryPath));
+
 		String fileName = "employee_backup_" + Instant.now().toEpochMilli() + ".csv";
 		Path filePath = Paths.get(directoryPath, fileName);
 
-		Files.createDirectories(filePath);
 
 		try (BufferedWriter writer = Files.newBufferedWriter(filePath);
 			 CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT
@@ -97,6 +94,9 @@ public class FileServiceImpl implements FileServiceInterface {
 			}
 
 			csvPrinter.flush();
+			if (!Files.exists(filePath)) { // 파일이 존재하지 않는다면 예외 발생
+				throw new IOException("CSV file was not created at: " + filePath);
+			}
 			File fileEntity = File.createCsvFile(fileName, Files.size(filePath), filePath);
 			fileRepository.save(fileEntity);
 

@@ -8,7 +8,7 @@ import com.team09.sb01hrbank09.entity.File;
 
 public interface FileServiceInterface {
 
-	String downloadFile(Long id) throws IOException;
+	byte[] downloadFile(Long id) throws IOException;
 
 	File createCsvBackupFile() throws IOException;
 
