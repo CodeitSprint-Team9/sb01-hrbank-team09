@@ -5,7 +5,6 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -35,14 +34,11 @@ import com.team09.sb01hrbank09.dto.request.EmployeeUpdateRequest;
 import com.team09.sb01hrbank09.dto.response.CursorPageResponseEmployeeDto;
 import com.team09.sb01hrbank09.entity.Department;
 import com.team09.sb01hrbank09.entity.Employee;
-import com.team09.sb01hrbank09.entity.Enum.ChangeLogType;
 import com.team09.sb01hrbank09.entity.Enum.EmployeeStatus;
 import com.team09.sb01hrbank09.entity.File;
-import com.team09.sb01hrbank09.event.EmployeeEvent;
 import com.team09.sb01hrbank09.mapper.EmployeeMapper;
 import com.team09.sb01hrbank09.repository.EmployeeRepository;
 
-import jakarta.persistence.Tuple;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -136,14 +132,16 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 		Instant hireDateToInstant = hireDateTo != null ? Instant.parse(hireDateTo) : null;
 
 		// 정렬 필드와 방향을 설정
-		Sort.Order sortOrder = sortDirection.equalsIgnoreCase("desc") ? Sort.Order.desc(sortField) : Sort.Order.asc(sortField);
+		Sort.Order sortOrder =
+			sortDirection.equalsIgnoreCase("desc") ? Sort.Order.desc(sortField) : Sort.Order.asc(sortField);
 		Sort sort = Sort.by(sortOrder);
 
 		// 커서 기반 페이지네이션을 위한 Pageable 객체 생성
 		Pageable pageable = PageRequest.of(cursor != null ? Integer.parseInt(cursor) : 0, size, sort);
 
 		// 필터를 적용한 직원 리스트 조회
-		LocalDateTime hireDateFromTimestamp = hireDateFromInstant != null ? LocalDateTime.from(hireDateFromInstant) : null;
+		LocalDateTime hireDateFromTimestamp =
+			hireDateFromInstant != null ? LocalDateTime.from(hireDateFromInstant) : null;
 		LocalDateTime hireDateToTimestamp = hireDateToInstant != null ? LocalDateTime.from(hireDateToInstant) : null;
 
 		// 직원 목록을 필터링하여 조회 (필터 및 페이징 처리)
@@ -234,9 +232,8 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 
 		Employee employee = employeeRepository.findById(id)
 			.orElseThrow(() -> new NoSuchElementException("Message with id " + id + " not found"));
-		EmployeeDto newEmployee=employeeMapper.employeeToDto(employee);
+		EmployeeDto newEmployee = employeeMapper.employeeToDto(employee);
 		File file = null;
-
 
 		Department usingDepartment = departmentServiceInterface.findDepartmentEntityById(
 			employeeUpdateRequest.departmentId());
@@ -255,15 +252,14 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 		employee.updateStatus(status);
 
 		if (profileImg != null) {
-			if(employee.getFile()!=null){
-				File oldFile=fileServiceInterface.findById(employee.getFile().getId());
+			if (employee.getFile() != null) {
+				File oldFile = fileServiceInterface.findById(employee.getFile().getId());
 				employee.updateFile(null);
 				fileServiceInterface.deleteFile(oldFile);
 			}
 			file = fileServiceInterface.createImgFile(profileImg);
 			employee.updateFile(file);
-		}
-		else{
+		} else {
 			employee.updateFile(file);
 		}
 		employee.getDepartment().increaseCount();
@@ -293,15 +289,15 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 			Instant periodDate;
 
 			if (result[0] instanceof Timestamp) {
-				periodDate = ((Timestamp) result[0]).toInstant();
+				periodDate = ((Timestamp)result[0]).toInstant();
 			} else {
-				periodDate = (Instant) result[0];
+				periodDate = (Instant)result[0];
 			}
-			Long count = ((Number) result[1]).longValue();
+			Long count = ((Number)result[1]).longValue();
 			Long change = (previousCount == null) ? 0L : count - previousCount;
 			Double changeRate = (previousCount == null || previousCount == 0L)
 				? 0.0
-				: (double) change / previousCount;
+				: (double)change / previousCount;
 
 			trendList.add(new EmployeeTrendDto(periodDate, count, change, changeRate));
 			previousCount = count;
@@ -327,12 +323,10 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 	public Long countEmployee(String status, LocalDate startedAt, LocalDate endedAt) {
 		boolean isValidStatus = Arrays.stream(EmployeeStatus.values())
 			.anyMatch(e -> e.name().equalsIgnoreCase(status));
-		EmployeeStatus findStatus=null;
+		EmployeeStatus findStatus = null;
 		if (!isValidStatus) {
-			findStatus=EmployeeStatus.ACTIVE;
-		}
-
-		else
+			findStatus = EmployeeStatus.ACTIVE;
+		} else
 			findStatus = EmployeeStatus.valueOf(status.toUpperCase());
 		return employeeRepository.countByStatusAndHireDateFromBetween(findStatus, startedAt, endedAt);
 	}
