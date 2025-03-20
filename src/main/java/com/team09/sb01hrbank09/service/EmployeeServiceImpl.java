@@ -3,6 +3,7 @@ package com.team09.sb01hrbank09.service;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,7 +39,6 @@ import com.team09.sb01hrbank09.entity.File;
 import com.team09.sb01hrbank09.mapper.EmployeeMapper;
 import com.team09.sb01hrbank09.repository.EmployeeRepository;
 
-import jakarta.persistence.Tuple;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -101,7 +101,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 		log.info("changelog 생성 시작...");
 		changeLogServiceInterface.createChangeLog(
 			ChangeLogType.CREATED, employee.getEmployeeNumber(), memo, ipAddress, null,
-			newEmployee
+			employeeMapper.employeeToDto(employee)
 		);
 		log.info("change-logs 생성 완료");
 
@@ -232,7 +232,6 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 		EmployeeDto newEmployee = employeeMapper.employeeToDto(employee);
 		File file = null;
 
-
 		Department usingDepartment = departmentServiceInterface.findDepartmentEntityById(
 			employeeUpdateRequest.departmentId());
 		if (usingDepartment == null) {
@@ -250,20 +249,19 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 		employee.updateStatus(status);
 
 		if (profileImg != null) {
-			if(employee.getFile()!=null){
-				File oldFile=fileServiceInterface.findById(employee.getFile().getId());
+			if (employee.getFile() != null) {
+				File oldFile = fileServiceInterface.findById(employee.getFile().getId());
 				employee.updateFile(null);
 				fileServiceInterface.deleteFile(oldFile);
 			}
 			file = fileServiceInterface.createImgFile(profileImg);
 			employee.updateFile(file);
-		}
-		else{
+		} else {
 			employee.updateFile(file);
 		}
 		employee.getDepartment().increaseCount();
 		updateTime = Instant.now();
-    
+
 		EmployeeDto oldEmployee = employeeMapper.employeeToDto(employee);
 		//만들어지면 넣기
 		//changeLogServiceInterface.createChangeLog();
@@ -276,7 +274,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 		log.info("Change-logs 생성중...");
 		changeLogServiceInterface.createChangeLog(
 			ChangeLogType.UPDATED, employee.getEmployeeNumber(), "직원 삭제", ipAddress,
-			beforeEmployee, afterEmployee
+			oldEmployee, afterEmployee
 		);
 		log.info("change-logs 생성 완료");
 
@@ -295,15 +293,15 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 			Instant periodDate;
 
 			if (result[0] instanceof Timestamp) {
-				periodDate = ((Timestamp) result[0]).toInstant();
+				periodDate = ((Timestamp)result[0]).toInstant();
 			} else {
-				periodDate = (Instant) result[0];
+				periodDate = (Instant)result[0];
 			}
-			Long count = ((Number) result[1]).longValue();
+			Long count = ((Number)result[1]).longValue();
 			Long change = (previousCount == null) ? 0L : count - previousCount;
 			Double changeRate = (previousCount == null || previousCount == 0L)
 				? 0.0
-				: (double) change / previousCount;
+				: (double)change / previousCount;
 
 			trendList.add(new EmployeeTrendDto(periodDate, count, change, changeRate));
 			previousCount = count;
