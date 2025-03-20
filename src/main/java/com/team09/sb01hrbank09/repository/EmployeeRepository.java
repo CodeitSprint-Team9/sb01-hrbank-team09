@@ -73,7 +73,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 		@Param("position") String position,
 		@Param("hireDateFrom") LocalDateTime hireDateFrom,
 		@Param("hireDateTo") LocalDateTime hireDateTo,
-		@Param("status") String status,
+		@Param("status") EmployeeStatus status,
 		@Param("idAfter") Long idAfter,
 		Pageable pageable);
 }

@@ -1,0 +1,5 @@
+ID,EmployeeNumber,Name,Email,DepartmentName,Position,HireDate,Status
+1,EMP-년도feb380d0981049,김치1,ㅁㄴㅇ@ㅁㄴㅇ.com,김치,1234,2025-03-04,ACTIVE
+2,EMP-년도4f4091936e1849,ㅁㄴㅇ.com,ㅁㄴㅇ@as.com,탄수화물,ㅁㄴㅇ.com,2025-02-19,ACTIVE
+5,EMP-년도ba40af14bc4242,김치,ㅁㅇㄴㅁㅇㄴ@ㅁㅇㄴ.com,동치미,ㅁㄴㄹㅇㅁㄹㅇㄴ,2022-02-04,ACTIVE
+4,EMP-년도193c0800130b41,944ds2q,dds1fe.4114@ㅁㄴㅇ.com,김치,1감12,2024-03-02,ON_LEAVE

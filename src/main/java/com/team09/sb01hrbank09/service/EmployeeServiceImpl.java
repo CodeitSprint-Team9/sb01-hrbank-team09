@@ -5,6 +5,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -140,11 +141,20 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 			hireDateFromInstant != null ? LocalDateTime.from(hireDateFromInstant) : null;
 		LocalDateTime hireDateToTimestamp = hireDateToInstant != null ? LocalDateTime.from(hireDateToInstant) : null;
 
+		EmployeeStatus employeeStatus = null;
+		if (status != null) {
+			try {
+				employeeStatus = EmployeeStatus.valueOf(status.toUpperCase()); // Enum 변환
+			} catch (IllegalArgumentException e) {
+				throw new NoSuchElementException("Invalid status value: " + status); // 예외 처리
+			}
+		}
+
 		// 직원 목록을 필터링하여 조회 (필터 및 페이징 처리)
 		Page<Employee> employeePage = employeeRepository.findEmployeesWithFilters(
 			nameOrEmail, employeeNumber, departmentName, position,
 			hireDateFromTimestamp, hireDateToTimestamp,
-			status, idAfter, pageable
+			employeeStatus, idAfter, pageable
 		);
 
 		// 페이지네이션 처리된 직원 목록을 DTO로 변환
@@ -293,15 +303,16 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 			Instant periodDate;
 
 			if (result[0] instanceof Timestamp) {
-				periodDate = ((Timestamp)result[0]).toInstant();
+				periodDate = ((Timestamp) result[0]).toInstant();
+			} else if (result[0] instanceof LocalDate) {
+				periodDate = ((LocalDate) result[0]).atStartOfDay(ZoneOffset.UTC).toInstant();
 			} else {
-				periodDate = (Instant)result[0];
+				periodDate = (Instant) result[0];
 			}
-			Long count = ((Number)result[1]).longValue();
+
+			Long count = ((Number) result[1]).longValue();
 			Long change = (previousCount == null) ? 0L : count - previousCount;
-			Double changeRate = (previousCount == null || previousCount == 0L)
-				? 0.0
-				: (double)change / previousCount;
+			Double changeRate = (previousCount == null || previousCount == 0L) ? 0.0 : (double) change / previousCount;
 
 			trendList.add(new EmployeeTrendDto(periodDate, count, change, changeRate));
 			previousCount = count;
