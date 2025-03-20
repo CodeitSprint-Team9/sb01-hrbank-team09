@@ -3,9 +3,7 @@ package com.team09.sb01hrbank09.service;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -17,7 +15,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -38,7 +35,6 @@ import com.team09.sb01hrbank09.entity.Employee;
 import com.team09.sb01hrbank09.entity.Enum.ChangeLogType;
 import com.team09.sb01hrbank09.entity.Enum.EmployeeStatus;
 import com.team09.sb01hrbank09.entity.File;
-import com.team09.sb01hrbank09.event.EmployeeEvent;
 import com.team09.sb01hrbank09.mapper.EmployeeMapper;
 import com.team09.sb01hrbank09.repository.EmployeeRepository;
 
@@ -61,13 +57,12 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 		@Lazy DepartmentServiceInterface departmentServiceInterface,
 		@Lazy FileServiceInterface fileServiceInterface,
 		@Lazy ChangeLogServiceInterface changeLogServiceInterface,
-		@Lazy EmployeeMapper employeeMapper,
-		@Lazy ApplicationEventPublisher eventPublisher) {
+		@Lazy EmployeeMapper employeeMapper) {
 		this.employeeRepository = employeeRepository;
 		this.departmentServiceInterface = departmentServiceInterface;
 		this.fileServiceInterface = fileServiceInterface;
 		this.changeLogServiceInterface = changeLogServiceInterface;
-		this.employeeMapper = employeeMapper
+		this.employeeMapper = employeeMapper;
 	}
 
 	private Instant updateTime = Instant.EPOCH;
@@ -133,14 +128,16 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 		Instant hireDateToInstant = hireDateTo != null ? Instant.parse(hireDateTo) : null;
 
 		// 정렬 필드와 방향을 설정
-		Sort.Order sortOrder = sortDirection.equalsIgnoreCase("desc") ? Sort.Order.desc(sortField) : Sort.Order.asc(sortField);
+		Sort.Order sortOrder =
+			sortDirection.equalsIgnoreCase("desc") ? Sort.Order.desc(sortField) : Sort.Order.asc(sortField);
 		Sort sort = Sort.by(sortOrder);
 
 		// 커서 기반 페이지네이션을 위한 Pageable 객체 생성
 		Pageable pageable = PageRequest.of(cursor != null ? Integer.parseInt(cursor) : 0, size, sort);
 
 		// 필터를 적용한 직원 리스트 조회
-		LocalDateTime hireDateFromTimestamp = hireDateFromInstant != null ? LocalDateTime.from(hireDateFromInstant) : null;
+		LocalDateTime hireDateFromTimestamp =
+			hireDateFromInstant != null ? LocalDateTime.from(hireDateFromInstant) : null;
 		LocalDateTime hireDateToTimestamp = hireDateToInstant != null ? LocalDateTime.from(hireDateToInstant) : null;
 
 		// 직원 목록을 필터링하여 조회 (필터 및 페이징 처리)
@@ -214,7 +211,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 
 			log.info("이벤트 발행시작...");
 			changeLogServiceInterface.createChangeLog(
-				ChangeLogType.CREATED, employee.getEmployeeNumber(), "직원 삭제", ipAddress,
+				ChangeLogType.DELETED, employee.getEmployeeNumber(), "직원 삭제", ipAddress,
 				employeeMapper.employeeToDto(employee), null
 			);
 			log.info("change-logs 생성 완료");
@@ -275,16 +272,10 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 
 		//만들어지면 넣기(dto변환)
 		EmployeeDto afterEmployee = employeeMapper.employeeToDto(employee);
-		String memo;
-		if (employeeUpdateRequest.memo() == null) {
-			memo = "직원 정보 수정";
-		} else {
-			memo = employeeUpdateRequest.memo();
-		}
 
 		log.info("Change-logs 생성중...");
 		changeLogServiceInterface.createChangeLog(
-			ChangeLogType.CREATED, employee.getEmployeeNumber(), "직원 삭제", ipAddress,
+			ChangeLogType.UPDATED, employee.getEmployeeNumber(), "직원 삭제", ipAddress,
 			beforeEmployee, afterEmployee
 		);
 		log.info("change-logs 생성 완료");
@@ -338,12 +329,10 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 	public Long countEmployee(String status, LocalDate startedAt, LocalDate endedAt) {
 		boolean isValidStatus = Arrays.stream(EmployeeStatus.values())
 			.anyMatch(e -> e.name().equalsIgnoreCase(status));
-		EmployeeStatus findStatus=null;
+		EmployeeStatus findStatus = null;
 		if (!isValidStatus) {
-			findStatus=EmployeeStatus.ACTIVE;
-		}
-
-		else
+			findStatus = EmployeeStatus.ACTIVE;
+		} else
 			findStatus = EmployeeStatus.valueOf(status.toUpperCase());
 		return employeeRepository.countByStatusAndHireDateFromBetween(findStatus, startedAt, endedAt);
 	}
