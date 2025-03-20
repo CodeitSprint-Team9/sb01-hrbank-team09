@@ -2,6 +2,7 @@ package com.team09.sb01hrbank09.service;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.web.multipart.MultipartFile;
@@ -34,13 +35,13 @@ public interface EmployeeServiceInterface {
 		IOException;
 
 	//새로운Dto 직원수 추이
-	List<EmployeeTrendDto> getEmployeeTrend(Instant startedAt, Instant endedAt, String gap);
+	List<EmployeeTrendDto> getEmployeeTrend(LocalDate startedAt, LocalDate endedAt, String gap);
 
 	//새로운Dto 직원 분포 조회
 	List<EmployeeDistributionDto> getEmployeeDistributaion(String groupBy, String status);
 
 	//직원 수 조회
-	Long countEmployee(String status, Instant startedAt, Instant endedAt);
+	Long countEmployee(String status, LocalDate startedAt, LocalDate endedAt);
 
 	Instant getUpdateTime();
 }
