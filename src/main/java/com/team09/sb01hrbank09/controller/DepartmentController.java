@@ -43,7 +43,7 @@ public class DepartmentController {
 		@RequestParam(required = false) Long idAfter,
 		@RequestParam(required = false) String cursor,
 		@RequestParam(defaultValue = "10") int size,
-		@RequestParam(defaultValue = "establishedDate") String sortField,
+		@RequestParam(defaultValue = "name") String sortField,
 		@RequestParam(defaultValue = "asc") String sortDirection) {
 		CursorPageRequestDepartment request = new CursorPageRequestDepartment(
 			nameOrDescription, idAfter, cursor, size, sortField, sortDirection

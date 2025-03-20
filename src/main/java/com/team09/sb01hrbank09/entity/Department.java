@@ -56,12 +56,12 @@ public class Department {
 		this.establishedDate = establishedDate;
 	}
 
-//	public void increaseCount() {
-//		this.employeeCount++;
-//	}
-//
-//	public void decreaseCount() {
-//		this.employeeCount--;
-//	}
+	public void increaseCount() {
+		this.employeeCount++;
+	}
+
+	public void decreaseCount() {
+		this.employeeCount--;
+	}
 
 }

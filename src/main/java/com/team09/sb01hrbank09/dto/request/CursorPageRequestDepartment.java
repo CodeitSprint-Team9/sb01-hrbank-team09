@@ -8,4 +8,15 @@ public record CursorPageRequestDepartment(
 	String sortField,
 	String sortDirection
 ) {
+
+	public static CursorPageRequestDepartment copy(CursorPageRequestDepartment request, Long idAfter, String cursor) {
+		return new CursorPageRequestDepartment(
+			request.nameOrDescription(),
+			idAfter,
+			cursor,
+			request.size(),
+			request.sortField(),
+			request.sortDirection()
+		);
+	}
 }
