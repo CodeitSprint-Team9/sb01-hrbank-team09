@@ -124,6 +124,8 @@ public class FileServiceImpl implements FileServiceInterface {
 	@Override
 	@Transactional
 	public boolean deleteFile(File file) {
+		if( file==null)
+			return true;
 		if (fileRepository.existsById(file.getId())) {
 			Path path = file.getFilePath();
 			try {

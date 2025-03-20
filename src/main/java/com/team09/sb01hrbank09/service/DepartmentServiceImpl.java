@@ -174,4 +174,5 @@ public class DepartmentServiceImpl implements DepartmentServiceInterface {
 		return departmentRepository.findById(id)
 			.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 부서입니다."));
 	}
+
 }
