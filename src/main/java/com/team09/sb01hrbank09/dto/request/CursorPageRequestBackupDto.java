@@ -2,9 +2,11 @@ package com.team09.sb01hrbank09.dto.request;
 
 import java.time.Instant;
 
+import com.team09.sb01hrbank09.entity.Enum.BackupStatus;
+
 public record CursorPageRequestBackupDto(
 	String worker, // 작업자
-	String status, // 상태 (IN_PROGRESS, COMPLETED, FAILED)
+	BackupStatus status, // 상태 (IN_PROGRESS, COMPLETED, FAILED)
 	Instant startedAtFrom, // 시작 시간 (부터)
 	Instant startedAtTo, // 시작 시간 (까지)
 	Long idAfter, // 이전 페이지 마지막 요소 ID

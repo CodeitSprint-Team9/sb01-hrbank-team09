@@ -49,18 +49,18 @@ public class Backup {
 
 	@OneToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "file_id")
-	private File fileId;
+	private File file;
 
-	private Backup(String worker, File fileId, BackupStatus backupStatus) {
+	private Backup(String worker, File file, BackupStatus backupStatus) {
 		this.worker = worker;
-		this.fileId = fileId;
+		this.file = file;
 		this.status = backupStatus;
 		this.startedAt = Instant.now();
 		this.endedAt = null;
 	}
 
-	public static Backup createBackup(String worker, Employee employeeId, File fileId) {
-		return new Backup(worker, fileId, BackupStatus.IN_PROGRESS);
+	public static Backup createBackup(String worker, Employee employeeId, File file) {
+		return new Backup(worker, file, BackupStatus.IN_PROGRESS);
 	}
 
 	public static Backup createBackup(String worker) {
@@ -69,19 +69,19 @@ public class Backup {
 
 	public void setStatusSkipped() {
 		this.status = BackupStatus.SKIPPED;
-		this.fileId = null;
+		this.file = null;
 		this.endedAt = Instant.now();
 	}
 
-	public void setStatusCompleted(File fileId) {
+	public void setStatusCompleted(File file) {
 		this.status = BackupStatus.COMPLETED;
-		this.fileId = fileId;
+		this.file = file;
 		this.endedAt = Instant.now();
 	}
 
-	public void setStatusFailed(File fileId) {
+	public void setStatusFailed(File file) {
 		this.status = BackupStatus.FAILED;
-		this.fileId = fileId;
+		this.file = file;
 		this.endedAt = Instant.now();
 	}
 
