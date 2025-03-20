@@ -113,6 +113,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 		// ));
 		// log.info("change-logs 생성 완료");
 
+		usingDepartment.increaseCount();
 		return employeeMapper.employeeToDto(employeeRepository.save(employee));
 	}
 
@@ -209,6 +210,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 
 			Employee employee = employeeRepository.findById(id).get();
 			fileServiceInterface.deleteFile(employee.getFile());
+			employee.getDepartment().decreaseCount();
 			employeeRepository.deleteById(id);
 			//로그작업
 			updateTime = Instant.now();
@@ -243,6 +245,8 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 		}
 		EmployeeStatus status = EmployeeStatus.valueOf(employeeUpdateRequest.status().toUpperCase());
 
+		employee.getDepartment().decreaseCount();
+
 		employee.updateName(employeeUpdateRequest.name());
 		employee.updateEmail(employeeUpdateRequest.email());
 		employee.updateDepartment(usingDepartment);
@@ -262,7 +266,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 		else{
 			employee.updateFile(file);
 		}
-
+		employee.getDepartment().increaseCount();
 		updateTime = Instant.now();
 
 		//만들어지면 넣기(dto변환)
@@ -279,7 +283,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 
 	@Override
 	@Transactional(readOnly = true)
-	public List<EmployeeTrendDto> getEmployeeTrend(Instant startedAt, Instant endedAt, String gap) {
+	public List<EmployeeTrendDto> getEmployeeTrend(LocalDate startedAt, LocalDate endedAt, String gap) {
 
 		List<Object[]> results = employeeRepository.findEmployeeTrend(startedAt, endedAt, gap);
 		List<EmployeeTrendDto> trendList = new ArrayList<>();
@@ -309,7 +313,6 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 	@Transactional(readOnly = true)
 	public List<EmployeeDistributionDto> getEmployeeDistributaion(String groupBy, String status) {
 
-		List<EmployeeDistributionDto> distribution;
 		if (groupBy.equals("position")) {
 			return convertDistributionPosition(status);
 		} else if (groupBy.equals("department")) {
@@ -321,7 +324,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 
 	@Override
 	@Transactional(readOnly = true)
-	public Long countEmployee(String status, Instant startedAt, Instant endedAt) {
+	public Long countEmployee(String status, LocalDate startedAt, LocalDate endedAt) {
 		boolean isValidStatus = Arrays.stream(EmployeeStatus.values())
 			.anyMatch(e -> e.name().equalsIgnoreCase(status));
 		EmployeeStatus findStatus=null;
