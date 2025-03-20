@@ -1,15 +1,10 @@
 package com.team09.sb01hrbank09.controller;
 
 import java.io.IOException;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.List;
-
-import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -33,6 +28,7 @@ import com.team09.sb01hrbank09.dto.request.EmployeeUpdateRequest;
 import com.team09.sb01hrbank09.dto.response.CursorPageResponseEmployeeDto;
 import com.team09.sb01hrbank09.service.EmployeeServiceInterface;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -158,7 +154,7 @@ public class EmployeeController {
 	@GetMapping("/count")
 	public ResponseEntity<Long> getEmployeeCount(
 		@RequestParam(required = false, defaultValue = "ALL") String status,//all에대한 예외 필요
-		@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)LocalDate fromDate,
+		@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
 		@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
 
 		if (fromDate == null) {
