@@ -42,6 +42,7 @@ import com.team09.sb01hrbank09.event.EmployeeEvent;
 import com.team09.sb01hrbank09.mapper.EmployeeMapper;
 import com.team09.sb01hrbank09.repository.EmployeeRepository;
 
+import jakarta.persistence.Tuple;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -119,7 +120,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 	@Transactional(readOnly = true)
 	public EmployeeDto findEmployeeById(Long Id) {
 		Employee employee = employeeRepository.findById(Id)
-			.orElseThrow(() -> new NoSuchElementException("Message with id " + Id + " not found"));
+			.orElseThrow(() -> new NoSuchElementException("employee with id " + Id + " not found"));
 		return employeeMapper.employeeToDto(employee);
 	}
 
@@ -234,8 +235,6 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 		EmployeeDto newEmployee=employeeMapper.employeeToDto(employee);
 		File file = null;
 
-		// 변경 전 상태 저장 (깊은 복사)
-		EmployeeDto beforeEmployee = employeeMapper.employeeToDto(employee);
 
 		Department usingDepartment = departmentServiceInterface.findDepartmentEntityById(
 			employeeUpdateRequest.departmentId());
@@ -252,24 +251,21 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 		employee.updateStatus(status);
 
 		if (profileImg != null) {
-			fileServiceInterface.deleteFile(employee.getFile());
+			if(employee.getFile()!=null){
+				File oldFile=fileServiceInterface.findById(employee.getFile().getId());
+				employee.updateFile(null);
+				fileServiceInterface.deleteFile(oldFile);
+			}
 			file = fileServiceInterface.createImgFile(profileImg);
 			employee.updateFile(file);
 		}
-		EmployeeDto oldEmployee=employeeMapper.employeeToDto(employee);
-		//만들어지면 넣기
-		//changeLogServiceInterface.createChangeLog();
+		else{
+			employee.updateFile(file);
+		}
 
 		updateTime = Instant.now();
 
 		//만들어지면 넣기(dto변환)
-		EmployeeDto afterEmployee = employeeMapper.employeeToDto(employee);
-		String memo;
-		if (employeeUpdateRequest.memo() == null) {
-			memo = "직원 정보 수정";
-		} else {
-			memo = employeeUpdateRequest.memo();
-		}
 		// 이벤트 발행 (before = 기존 Employee, after = 수정된 Employee)
 		// log.info("이벤트 발행시작...");
 		// eventPublisher.publishEvent(new EmployeeEvent(
@@ -286,21 +282,27 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 	public List<EmployeeTrendDto> getEmployeeTrend(Instant startedAt, Instant endedAt, String gap) {
 
 		List<Object[]> results = employeeRepository.findEmployeeTrend(startedAt, endedAt, gap);
+		List<EmployeeTrendDto> trendList = new ArrayList<>();
+		Long previousCount = null;
 
-		List<EmployeeTrendDto> trends = new ArrayList<>();
-		long previousCount = 0;
+		for (Object[] result : results) {
+			Instant periodDate;
 
-		for (Object[] row : results) {
-			Instant date = ((Timestamp)row[0]).toInstant();
-			long count = ((Number)row[1]).longValue();
+			if (result[0] instanceof Timestamp) {
+				periodDate = ((Timestamp) result[0]).toInstant();
+			} else {
+				periodDate = (Instant) result[0];
+			}
+			Long count = ((Number) result[1]).longValue();
+			Long change = (previousCount == null) ? 0L : count - previousCount;
+			Double changeRate = (previousCount == null || previousCount == 0L)
+				? 0.0
+				: (double) change / previousCount;
 
-			long change = count - previousCount;
-			double changeRate = (previousCount == 0) ? 0.0 : (change * 100.0 / previousCount);
-			trends.add(new EmployeeTrendDto(date, count, change, changeRate));
+			trendList.add(new EmployeeTrendDto(periodDate, count, change, changeRate));
 			previousCount = count;
 		}
-
-		return trends;
+		return trendList;
 	}
 
 	@Override

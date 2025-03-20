@@ -1,6 +1,7 @@
 package com.team09.sb01hrbank09.dto.entityDto;
 
 import java.time.Instant;
+import java.time.LocalDate;
 
 public record EmployeeDto(
 	Long id,
@@ -10,7 +11,7 @@ public record EmployeeDto(
 	Long departmentId,
 	String departmentName,
 	String position,
-	Instant hireDateFrom,
+	LocalDate hireDateFrom,
 	String status,
 	Long profileImageId) {
 }

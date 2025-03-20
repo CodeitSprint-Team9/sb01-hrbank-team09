@@ -16,5 +16,7 @@ public interface FileServiceInterface {
 
 	boolean deleteFile(File file);
 
+	File findById(Long Id);
+
 	//String makeFileBackupError();
 }

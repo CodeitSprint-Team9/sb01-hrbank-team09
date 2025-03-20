@@ -29,11 +29,17 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 
 	Long countByStatusAndHireDateFromBetween(EmployeeStatus status, Instant start, Instant end);
 
-	@Query("SELECT FUNCTION('DATE_FORMAT', e.hireDateFrom, :gap) AS date, COUNT(e) AS count " +
-		"FROM Employee e " +
-		"WHERE e.hireDateFrom BETWEEN :startedAt AND :endedAt " +
-		"GROUP BY date " +
-		"ORDER BY e.hireDateFrom")
+
+
+	@Query("""
+    SELECT 
+        FUNCTION('DATE_TRUNC', :gap, e.hireDateFrom) AS periodDate, 
+        COUNT(e.id) AS cnt 
+    FROM Employee e 
+    WHERE e.hireDateFrom BETWEEN :startedAt AND :endedAt 
+    GROUP BY periodDate 
+    ORDER BY MIN(e.hireDateFrom)
+""")
 	List<Object[]> findEmployeeTrend(@Param("startedAt") Instant startedAt,
 		@Param("endedAt") Instant endedAt,
 		@Param("gap") String gap);

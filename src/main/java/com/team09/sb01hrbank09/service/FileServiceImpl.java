@@ -4,10 +4,12 @@ import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
+import java.util.Base64;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -44,7 +46,11 @@ public class FileServiceImpl implements FileServiceInterface {
 		Path getFile = file.getFilePath();
 		if (Files.exists(getFile)) {
 			byte[] fileContent = Files.readAllBytes(getFile);
-			return fileContent.toString();//이부분은 이미지 보고 수정
+			if (file.getType().equalsIgnoreCase("txt") || file.getType().equalsIgnoreCase("csv") || file.getType().equalsIgnoreCase("log")) {
+				return new String(fileContent, StandardCharsets.UTF_8);
+			} else {
+				return Base64.getEncoder().encodeToString(fileContent);
+			}
 		} else {
 			throw new FileNotFoundException("File not found at path: " + getFile);
 		}
@@ -67,7 +73,7 @@ public class FileServiceImpl implements FileServiceInterface {
 				 .withHeader("ID", "EmployeeNumber", "Name", "Email", "DepartmentName",
 					 "Position", "HireDate", "Status"))) {
 
-			int batchSize = 10000;
+			int batchSize = 10000;//5000?
 			int count = 0;
 
 			for (EmployeeDto employee : data) {
@@ -91,7 +97,7 @@ public class FileServiceImpl implements FileServiceInterface {
 			}
 
 			csvPrinter.flush();
-			File fileEntity = File.createCsvFile(fileName, "csv", Files.size(filePath), filePath);
+			File fileEntity = File.createCsvFile(fileName, Files.size(filePath), filePath);
 			fileRepository.save(fileEntity);
 
 			return fileEntity;
@@ -111,7 +117,7 @@ public class FileServiceImpl implements FileServiceInterface {
 	@Transactional
 	public File createImgFile(MultipartFile file) throws IOException {
 
-		File entityFile = File.createImgFile(file.getName(), file.getContentType(), file.getSize());
+		File entityFile = File.createImgFile(file.getOriginalFilename(),file.getSize());
 		Path filePath = entityFile.getFilePath();
 
 		file.transferTo(filePath.toFile());
@@ -124,7 +130,7 @@ public class FileServiceImpl implements FileServiceInterface {
 	@Override
 	@Transactional
 	public boolean deleteFile(File file) {
-		if( file==null)
+		if (file == null)
 			return true;
 		if (fileRepository.existsById(file.getId())) {
 			Path path = file.getFilePath();
@@ -140,6 +146,12 @@ public class FileServiceImpl implements FileServiceInterface {
 			return true;
 		}
 		return false;
+	}
+
+	@Override
+	public File findById(Long Id) {
+		return fileRepository.findById(Id).
+			orElseThrow(() -> new NoSuchElementException("file with id " + Id + " not found"));
 	}
 
 	private Path logError(Path filePath, IOException e) {

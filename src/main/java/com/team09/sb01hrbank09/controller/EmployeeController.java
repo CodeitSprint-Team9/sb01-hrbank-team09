@@ -3,7 +3,7 @@ package com.team09.sb01hrbank09.controller;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
+import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.List;
 
@@ -49,7 +49,6 @@ public class EmployeeController {
 		if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
 			ipAddress = request.getRemoteAddr();
 		}
-		System.out.println(ipAddress);
 		EmployeeDto response = employeeServiceInterface.creatEmployee(employeeCreateRequest, profileImage, ipAddress);
 
 		return ResponseEntity.ok(response);
@@ -170,17 +169,27 @@ public class EmployeeController {
 	}
 
 	private Instant convertInstant(String unit, Instant time, Instant to) {
-		if ("month".equals(unit)) {
-			return to.minus(12, ChronoUnit.MONTHS);
-		} else if ("day".equals(unit)) {
-			return to.minus(12, ChronoUnit.DAYS);
-		} else if ("week".equals(unit)) {
-			return to.minus(12, ChronoUnit.WEEKS);
-		} else if ("quarter".equals(unit)) {
-			return to.minus(36, ChronoUnit.MONTHS);
-		} else if ("year".equals(unit)) {
-			return to.minus(12, ChronoUnit.YEARS);
+		LocalDateTime localDateTime = to.atZone(ZoneOffset.UTC).toLocalDateTime();
+
+		switch (unit) {
+			case "month":
+				localDateTime = localDateTime.minusMonths(12);
+				break;
+			case "day":
+				localDateTime = localDateTime.minusDays(12);
+				break;
+			case "week":
+				localDateTime = localDateTime.minusWeeks(12);
+				break;
+			case "quarter":
+				localDateTime = localDateTime.minusMonths(36);
+				break;
+			case "year":
+				localDateTime = localDateTime.minusYears(12);
+				break;
+			default:
+				return time;
 		}
-		return time;
+		return localDateTime.toInstant(ZoneOffset.UTC);
 	}
 }
