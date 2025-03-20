@@ -43,8 +43,7 @@ public interface ChangeLogRepository extends JpaRepository<ChangeLog, Long> {
 		"(:type IS NULL OR c.type = ?4) AND " +
 		"(:atFrom IS NULL OR c.at >= ?5) AND " +
 		"(:atTo IS NULL OR c.at <= ?6) AND " +
-		"(:idAfter IS NULL OR c.id > ?7) " +
-		"ORDER BY c.at DESC")
+		"(:idAfter IS NULL OR c.id > ?7) ")
 	Page<ChangeLog> findChangeLogsDesc(String employeeNumber, String memo, String ipAddress, ChangeLogType type,
 		Instant atFrom, Instant atTo, Long idAfter, Pageable pageable);
 
@@ -54,8 +53,7 @@ public interface ChangeLogRepository extends JpaRepository<ChangeLog, Long> {
 		"(:ipAddress IS NULL OR c.ipAddress LIKE %?3%) AND " +
 		"(:type IS NULL OR c.type = ?4) AND " +
 		"(:atFrom IS NULL OR c.at >= ?5) AND " +
-		"(:atTo IS NULL OR c.at <= ?6) " +
-		"ORDER BY c.at DESC")
+		"(:atTo IS NULL OR c.at <= ?6) ")
 	Page<ChangeLog> findChangeLogsWithoutIdAfterDesc(String employeeNumber, String memo, String ipAddress,
 		ChangeLogType type, Instant atFrom, Instant atTo,
 		Pageable pageable);
@@ -67,12 +65,12 @@ public interface ChangeLogRepository extends JpaRepository<ChangeLog, Long> {
 		"(:type IS NULL OR c.type = ?4) AND " +
 		"(:atFrom IS NULL OR c.at >= ?5) AND " +
 		"(:atTo IS NULL OR c.at <= ?6) " +
-		"ORDER BY c.at DESC")
+		"ORDER BY c.at ASC")
 	Page<ChangeLog> findChangeLogsWithoutIdAfterAsc(String employeeNumber, String memo, String ipAddress,
 		ChangeLogType type, Instant atFrom, Instant atTo,
 		Pageable pageable);
 
-	@Query("SELECT c FROM ChangeLog c WHERE " +
+	@Query("SELECT COUNT(c) FROM ChangeLog c WHERE " +
 		"(:employeeNumber IS NULL OR c.employeeNumber LIKE %?1%) AND " +
 		"(:memo IS NULL OR c.memo LIKE %?2%) AND " +
 		"(:ipAddress IS NULL OR c.ipAddress LIKE %?3%) AND " +
