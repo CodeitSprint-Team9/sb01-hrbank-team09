@@ -38,6 +38,7 @@ import com.team09.sb01hrbank09.entity.Employee;
 import com.team09.sb01hrbank09.entity.Enum.ChangeLogType;
 import com.team09.sb01hrbank09.entity.Enum.EmployeeStatus;
 import com.team09.sb01hrbank09.entity.File;
+import com.team09.sb01hrbank09.event.EmployeeEvent;
 import com.team09.sb01hrbank09.mapper.EmployeeMapper;
 import com.team09.sb01hrbank09.repository.EmployeeRepository;
 
@@ -65,7 +66,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 		this.departmentServiceInterface = departmentServiceInterface;
 		this.fileServiceInterface = fileServiceInterface;
 		this.changeLogServiceInterface = changeLogServiceInterface;
-		this.employeeMapper = employeeMapper;
+		this.employeeMapper = employeeMapper
 	}
 
 	private Instant updateTime = Instant.EPOCH;
