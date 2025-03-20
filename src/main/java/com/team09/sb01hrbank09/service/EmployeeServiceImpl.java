@@ -16,7 +16,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -58,8 +57,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 		@Lazy DepartmentServiceInterface departmentServiceInterface,
 		@Lazy FileServiceInterface fileServiceInterface,
 		@Lazy ChangeLogServiceInterface changeLogServiceInterface,
-		@Lazy EmployeeMapper employeeMapper,
-		@Lazy ApplicationEventPublisher eventPublisher) {
+		@Lazy EmployeeMapper employeeMapper) {
 		this.employeeRepository = employeeRepository;
 		this.departmentServiceInterface = departmentServiceInterface;
 		this.fileServiceInterface = fileServiceInterface;
@@ -214,7 +212,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 
 			log.info("이벤트 발행시작...");
 			changeLogServiceInterface.createChangeLog(
-				ChangeLogType.CREATED, employee.getEmployeeNumber(), "직원 삭제", ipAddress,
+				ChangeLogType.DELETED, employee.getEmployeeNumber(), "직원 삭제", ipAddress,
 				employeeMapper.employeeToDto(employee), null
 			);
 			log.info("change-logs 생성 완료");
@@ -263,20 +261,20 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 			employee.updateFile(file);
 		}
 		employee.getDepartment().increaseCount();
-		this.updateTime = Instant.now();
+
+		updateTime = Instant.now();
+
+		EmployeeDto oldEmployee = employeeMapper.employeeToDto(employee);
+		//만들어지면 넣기
+		//changeLogServiceInterface.createChangeLog();
 
 		EmployeeDto afterEmployee = employeeMapper.employeeToDto(employee);
-		String memo;
-		if (employeeUpdateRequest.memo() == null) {
-			memo = "직원 정보 수정";
-		} else {
-			memo = employeeUpdateRequest.memo();
-		}
 
 		log.info("Change-logs 생성중...");
 		changeLogServiceInterface.createChangeLog(
-			ChangeLogType.CREATED, employee.getEmployeeNumber(), "직원 삭제", ipAddress,
-			newEmployee, afterEmployee
+			ChangeLogType.UPDATED, employee.getEmployeeNumber(), "직원 삭제", ipAddress,
+			oldEmployee, afterEmployee
+
 		);
 		log.info("change-logs 생성 완료");
 

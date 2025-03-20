@@ -32,7 +32,6 @@ import com.team09.sb01hrbank09.entity.Enum.ChangeLogType;
 import com.team09.sb01hrbank09.mapper.ChangeLogMapper;
 import com.team09.sb01hrbank09.repository.ChangeLogRepository;
 
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -107,8 +106,12 @@ public class ChangeLogServiceImpl implements ChangeLogServiceInterface {
 			request = CursorPageRequestChangeLog.copy(request, null, null);
 		}
 
+		// type을 ChangeLogType으로 변환
+		ChangeLogType type = request.type() != null ? ChangeLogType.valueOf(request.type()) : null;
+
+		log.info("조회중...");
 		// 조건에 맞는 ChangeLog 목록 조회
-		Page<ChangeLog> changeLogs = getChangeLogs(request, sortDirection);
+		Page<ChangeLog> changeLogs = getChangeLogs(request, sortDirection, type);
 		log.info("조회된 데이터 수: {}", changeLogs.getTotalElements());
 
 		// ChangeLog 엔티티를 ChangeLogDto로 변환
@@ -155,36 +158,64 @@ public class ChangeLogServiceImpl implements ChangeLogServiceInterface {
 		);
 	}
 
-	private Page<ChangeLog> getChangeLogs(CursorPageRequestChangeLog request, String sortDirection) {
+	private Page<ChangeLog> getChangeLogs(CursorPageRequestChangeLog request, String sortDirection,
+		ChangeLogType type) {
 		Pageable pageable = PageRequest.of(
-			0,  // 페이지 번호 (0부터 시작)
-			request.size(),  // 페이지 크기
+			0,
+			request.size(),
 			sortDirection.equalsIgnoreCase("asc") ? Sort.by(request.sortField()).ascending() :
-				Sort.by(request.sortField()).descending()  // 정렬 설정
+				Sort.by(request.sortField()).descending()
 		);
+		if (request.idAfter() == null) {
+			log.info("idAfter는 null");
 
-		if ("asc".equalsIgnoreCase(sortDirection)) {
-			return changeLogRepository.findChangeLogsAsc(
-				request.employeeNumber(),
-				request.memo(),
-				request.ipAddress(),
-				request.type(),
-				request.atFrom(),
-				request.atTo(),
-				request.idAfter(),
-				pageable
-			);
+			// idAfter 조건 포함 조회
+			if ("asc".equalsIgnoreCase(sortDirection)) {
+				return changeLogRepository.findChangeLogsWithoutIdAfterAsc(
+					request.employeeNumber(),
+					request.memo(),
+					request.ipAddress(),
+					type,
+					request.atFrom(),
+					request.atTo(),
+					pageable
+				);
+			} else {
+				return changeLogRepository.findChangeLogsWithoutIdAfterDesc(
+					request.employeeNumber(),
+					request.memo(),
+					request.ipAddress(),
+					type,
+					request.atFrom(),
+					request.atTo(),
+					pageable
+				);
+			}
 		} else {
-			return changeLogRepository.findChangeLogsDesc(
-				request.employeeNumber(),
-				request.memo(),
-				request.ipAddress(),
-				request.type(),
-				request.atFrom(),
-				request.atTo(),
-				request.idAfter(),
-				pageable
-			);
+			// idAfter 조건 포함 조회
+			if ("asc".equalsIgnoreCase(sortDirection)) {
+				return changeLogRepository.findChangeLogsAsc(
+					request.employeeNumber(),
+					request.memo(),
+					request.ipAddress(),
+					type,
+					request.atFrom(),
+					request.atTo(),
+					request.idAfter(),
+					pageable
+				);
+			} else {
+				return changeLogRepository.findChangeLogsDesc(
+					request.employeeNumber(),
+					request.memo(),
+					request.ipAddress(),
+					type,
+					request.atFrom(),
+					request.atTo(),
+					request.idAfter(),
+					pageable
+				);
+			}
 		}
 	}
 
@@ -202,8 +233,11 @@ public class ChangeLogServiceImpl implements ChangeLogServiceInterface {
 			nextCursor = generateCursor(lastLog, request.sortField());
 		}
 
+		// type을 ChangeLogType으로 변환
+		ChangeLogType type = request.type() != null ? ChangeLogType.valueOf(request.type()) : null;
+
 		Long totalCount = changeLogRepository.countChangeLogs(
-			request.employeeNumber(), request.memo(), request.ipAddress(), request.type(),
+			request.employeeNumber(), request.memo(), request.ipAddress(), type,
 			request.atFrom(), request.atTo()
 		);
 
@@ -211,7 +245,7 @@ public class ChangeLogServiceImpl implements ChangeLogServiceInterface {
 			dtos.getContent(),
 			nextCursor,
 			nextIdAfter,
-			request.size(),
+			dtos.getNumberOfElements(),
 			totalCount,
 			hasNext
 		);
@@ -232,7 +266,7 @@ public class ChangeLogServiceImpl implements ChangeLogServiceInterface {
 		log.info("findChangeLogById() 호출, id: {}", id);
 		// 이력 조회
 		ChangeLog changeLog = changeLogRepository.findById(id)
-			.orElseThrow(() -> new EntityNotFoundException("ChangeLog not found for id: " + id));
+			.orElseThrow(() -> new IllegalArgumentException("ChangeLog not found for id: " + id));
 
 		// before, after JSON 비교하여 변경된 필드들 반환
 		List<DiffDto> diffs = compareDiffs(changeLog.getBefore(), changeLog.getAfter());
@@ -246,24 +280,6 @@ public class ChangeLogServiceImpl implements ChangeLogServiceInterface {
 		diffs.sort(Comparator.comparingInt(diff -> fieldOrder.indexOf(diff.propertyName())));
 		log.info("변경된 필드 수: {}", diffs.size());
 		return diffs;
-	}
-
-	@Override
-	@Transactional(readOnly = true)
-	public Long countChangeLog(Instant fromDate, Instant toDate) {
-		log.info("countChangeLog() 호출, fromDate: {}, toDate: {}", fromDate, toDate);
-		if (fromDate == null) {
-			fromDate = Instant.now().minus(7, ChronoUnit.DAYS); // 기본값: 7일 전
-			log.info("fromDate가 null, 기본값 설정됨: {}", fromDate);
-		}
-		if (toDate == null) {
-			toDate = Instant.now(); // 기본값: 현재 시간
-			log.info("toDate가 null, 기본값 설정됨: {}", toDate);
-		}
-
-		long count = changeLogRepository.countByAtBetween(fromDate, toDate);
-		log.info("조회된 ChangeLog 개수: {}", count);
-		return count;
 	}
 
 	private List<DiffDto> compareDiffs(String beforeJson, String afterJson) {
@@ -286,10 +302,15 @@ public class ChangeLogServiceImpl implements ChangeLogServiceInterface {
 				Object beforeValue = beforeMap.get(key);
 				Object afterValue = afterMap.get(key);
 
-				// before와 after가 다르면 DiffDto에 추가
+				// key 값을 매핑된 propertyName으로 변환 (없으면 기존 key 사용)
+				String mappedPropertyName = PROPERTY_NAME_MAPPING.getOrDefault(key, key);
+
 				if (!Objects.equals(beforeValue, afterValue)) {
-					diffs.add(new DiffDto(key, String.valueOf(beforeValue), String.valueOf(afterValue)));
-					log.info("변경된 필드: {}, before: {}, after: {}", key, beforeValue, afterValue);
+					diffs.add(new DiffDto(
+						mappedPropertyName,  // ✅ 변환된 propertyName 사용
+						beforeValue != null ? beforeValue.toString() : null,
+						afterValue != null ? afterValue.toString() : null
+					));
 				}
 			}
 		} catch (JsonProcessingException e) {
@@ -302,6 +323,36 @@ public class ChangeLogServiceImpl implements ChangeLogServiceInterface {
 		}
 
 		return diffs;
+	}
+
+	private static final Map<String, String> PROPERTY_NAME_MAPPING = Map.of(
+		"hireDateFrom", "hireDate",
+		"departmentName", "department",
+		"departmentId", "department",
+		"name", "name",
+		"position", "position",
+		"email", "email",
+		"employeeNumber", "employeeNumber",
+		"status", "status"
+	);
+
+	@Override
+	@Transactional(readOnly = true)
+	public Long countChangeLog(Instant fromDate, Instant toDate) {
+		log.info("countChangeLog() 호출, fromDate: {}, toDate: {}", fromDate, toDate);
+		Instant now = Instant.now();
+		if (fromDate == null) {
+			fromDate = now.minus(7, ChronoUnit.DAYS); // 기본값: 7일 전
+			log.info("fromDate가 null, 기본값 설정됨: {}", fromDate);
+		}
+		if (toDate == null) {
+			toDate = now; // 기본값: 현재 시간
+			log.info("toDate가 null, 기본값 설정됨: {}", toDate);
+		}
+
+		long count = changeLogRepository.countByAtBetween(fromDate, toDate);
+		log.info("조회된 ChangeLog 개수: {}", count);
+		return count;
 	}
 
 }
