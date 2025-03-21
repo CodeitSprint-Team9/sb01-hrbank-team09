@@ -5,6 +5,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Year;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -85,7 +86,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 		}
 
 		String uniquePart = UUID.randomUUID().toString().replaceAll("-", "").substring(0, 14);
-		String employeeNumber = "EMP-" + "년도" + uniquePart;
+		String employeeNumber = "EMP-" + Year.now().getValue()+"-" + uniquePart;
 		Employee employee = Employee.createEmployee(employeeCreateRequest.name(), employeeCreateRequest.email(),
 			employeeNumber, employeeCreateRequest.position(),
 			employeeCreateRequest.hireDate(), EmployeeStatus.ACTIVE, file, usingDepartment);
@@ -282,7 +283,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 
 		log.info("Change-logs 생성중...");
 		changeLogServiceInterface.createChangeLog(
-			ChangeLogType.UPDATED, employee.getEmployeeNumber(), "직원 삭제", ipAddress,
+			ChangeLogType.UPDATED, employee.getEmployeeNumber(), "직원 수정", ipAddress,
 			oldEmployee, afterEmployee
 
 		);
