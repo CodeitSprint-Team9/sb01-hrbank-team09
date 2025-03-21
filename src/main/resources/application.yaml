@@ -2,9 +2,7 @@ spring:
   application:
     name: sb01-hrbank-09
   datasource:
-    url: jdbc:postgresql://${PGHOST}:${PGPORT}/${PGDATABASE} # 분리된 변수 사용
-    username: ${PGUSER}
-    password: ${PGPASSWORD}
+    url: ${DATABASE_URL} # Railway에서 제공하는 DATABASE_URL 사용
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
