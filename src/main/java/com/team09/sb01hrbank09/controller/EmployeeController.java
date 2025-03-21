@@ -1,14 +1,12 @@
 package com.team09.sb01hrbank09.controller;
 
 import java.io.IOException;
-import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.List;
 
-import jakarta.servlet.http.HttpServletRequest;
-
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -30,6 +28,7 @@ import com.team09.sb01hrbank09.dto.request.EmployeeUpdateRequest;
 import com.team09.sb01hrbank09.dto.response.CursorPageResponseEmployeeDto;
 import com.team09.sb01hrbank09.service.EmployeeServiceInterface;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -126,18 +125,18 @@ public class EmployeeController {
 
 	@GetMapping("/stats/trend")
 	ResponseEntity<List<EmployeeTrendDto>> getEmployeeTrend(
-		@RequestParam(required = false) Instant from,
-		@RequestParam(required = false) Instant to,
+		@RequestParam(required = false) LocalDate from,
+		@RequestParam(required = false) LocalDate to,
 		@RequestParam(required = false, defaultValue = "month") String unit) {
 
 		if (unit == null || unit.isBlank()) {
 			unit = "month";
 		}
 		if (to == null) {
-			to = Instant.now();
+			to = LocalDate.now();
 		}
 		if (from == null) {
-			from = convertInstant(unit, from, to);
+			from = convertLocalDate(unit, from, to);
 		}
 
 		List<EmployeeTrendDto> response = employeeServiceInterface.getEmployeeTrend(from, to, unit);
@@ -155,43 +154,42 @@ public class EmployeeController {
 	@GetMapping("/count")
 	public ResponseEntity<Long> getEmployeeCount(
 		@RequestParam(required = false, defaultValue = "ALL") String status,//all에대한 예외 필요
-		@RequestParam(required = false) Instant fromDate,
-		@RequestParam(required = false) Instant toDate) {
+		@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+		@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
 
 		if (fromDate == null) {
-			fromDate = Instant.MIN;
+			fromDate = LocalDate.of(1900, 1, 1);
 		}
 		if (toDate == null) {
-			toDate = Instant.now();
+			toDate = LocalDate.now();
 		}
 		long count = employeeServiceInterface.countEmployee(status, fromDate, toDate);
 		return ResponseEntity.ok(count);
 	}
 
-	private Instant convertInstant(String unit, Instant time, Instant to) {
-		LocalDateTime localDateTime = to.atZone(ZoneOffset.UTC).toLocalDateTime();
-
+	private LocalDate convertLocalDate(String unit, LocalDate time, LocalDate to) {
+		LocalDate localDate = to;
 
 		switch (unit) {
 			case "month":
-				localDateTime = localDateTime.minusMonths(12);
+				localDate = localDate.minusMonths(12);
 				break;
 			case "day":
-				localDateTime = localDateTime.minusDays(12);
+				localDate = localDate.minusDays(12);
 				break;
 			case "week":
-				localDateTime = localDateTime.minusWeeks(12);
+				localDate = localDate.minusWeeks(12);
 				break;
 			case "quarter":
-				
-				localDateTime = localDateTime.minusMonths(36);
+				localDate = localDate.minusMonths(36);
 				break;
 			case "year":
-				localDateTime = localDateTime.minusYears(12);
+				localDate = localDate.minusYears(12);
 				break;
 			default:
 				return time;
 		}
-		return localDateTime.toInstant(ZoneOffset.UTC);
+
+		return localDate;
 	}
 }

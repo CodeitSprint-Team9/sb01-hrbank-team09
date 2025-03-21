@@ -1,33 +1,24 @@
 package com.team09.sb01hrbank09.service;
 
-import com.team09.sb01hrbank09.dto.entityDto.DepartmentDto;
-import com.team09.sb01hrbank09.dto.request.CursorPageRequestChangeLog;
-import com.team09.sb01hrbank09.dto.request.CursorPageRequestDepartment;
-import com.team09.sb01hrbank09.dto.request.DepartmentCreateRequest;
-import com.team09.sb01hrbank09.dto.request.DepartmentUpdateRequest;
-import com.team09.sb01hrbank09.dto.response.CursorPageResponseDepartmentDto;
-import com.team09.sb01hrbank09.entity.ChangeLog;
-import com.team09.sb01hrbank09.entity.Department;
-import com.team09.sb01hrbank09.mapper.DepartmentMapper;
-import com.team09.sb01hrbank09.repository.DepartmentRepository;
+import java.util.List;
+import java.util.Optional;
 
-import lombok.RequiredArgsConstructor;
-
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Base64;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import com.team09.sb01hrbank09.dto.entityDto.DepartmentDto;
+import com.team09.sb01hrbank09.dto.request.CursorPageRequestDepartment;
+import com.team09.sb01hrbank09.dto.request.DepartmentCreateRequest;
+import com.team09.sb01hrbank09.dto.request.DepartmentUpdateRequest;
+import com.team09.sb01hrbank09.dto.response.CursorPageResponseDepartmentDto;
+import com.team09.sb01hrbank09.entity.Department;
+import com.team09.sb01hrbank09.mapper.DepartmentMapper;
+import com.team09.sb01hrbank09.repository.DepartmentRepository;
 
-
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -89,13 +80,9 @@ public class DepartmentServiceImpl implements DepartmentServiceInterface {
 		String sortField = request.sortField();
 		String sortDirection = request.sortDirection();
 
-
-
-
 		Sort sort = Sort.by(Sort.Direction.fromString(request.sortDirection()), request.sortField());
 		Pageable pageable = PageRequest.of(0, request.size(), sort);
 		List<Department> departments = getDepartments(request);
-
 
 		//Page<Department> departmentsPage = getDepartments(request, sortDirection);
 		List<DepartmentDto> departmentDtos = departments.stream()
@@ -116,6 +103,7 @@ public class DepartmentServiceImpl implements DepartmentServiceInterface {
 		}
 	}
 
+
 	private List<Department> getDepartments(CursorPageRequestDepartment request) {
 		String sortField = request.sortField();
 		String direction = request.sortDirection();
@@ -127,6 +115,7 @@ public class DepartmentServiceImpl implements DepartmentServiceInterface {
 			} else
 				return departmentRepository.findDepartmentNameAsc(request.nameOrDescription(), request.idAfter(),
 					request.sortField());
+
 		}
 		else if ("establishedDate".equalsIgnoreCase(sortField)) {
 			return departmentRepository.findDepartmentDateDesc(request.nameOrDescription(), request.idAfter(),
@@ -137,7 +126,8 @@ public class DepartmentServiceImpl implements DepartmentServiceInterface {
 
 	}
 
-	private CursorPageResponseDepartmentDto toCursorPageResponse(List<DepartmentDto> dtos, CursorPageRequestDepartment request) {
+	private CursorPageResponseDepartmentDto toCursorPageResponse(List<DepartmentDto> dtos,
+		CursorPageRequestDepartment request) {
 		Long nextIdAfter = null;
 		String nextCursor = null;
 		boolean hasNext = false;
@@ -152,12 +142,11 @@ public class DepartmentServiceImpl implements DepartmentServiceInterface {
 			hasNext = !nextDepartment.isEmpty();
 		}
 
-			// if (departmentsPage.hasNext()) {
-			// 	Pageable nextPageable = departmentsPage.nextPageable();
-			// 	Page<Department> nextDepartmentsPage = getDepartments(CursorPageRequestDepartment.copy(request, nextIdAfter, nextCursor), nextPageable);
-			// 	hasNext = !nextDepartmentsPage.getContent().isEmpty();
-			// }
-
+		// if (departmentsPage.hasNext()) {
+		// 	Pageable nextPageable = departmentsPage.nextPageable();
+		// 	Page<Department> nextDepartmentsPage = getDepartments(CursorPageRequestDepartment.copy(request, nextIdAfter, nextCursor), nextPageable);
+		// 	hasNext = !nextDepartmentsPage.getContent().isEmpty();
+		// }
 
 		long totalCount = departmentRepository.getTotalElements(request.nameOrDescription());
 
@@ -170,7 +159,6 @@ public class DepartmentServiceImpl implements DepartmentServiceInterface {
 			hasNext
 		);
 	}
-
 
 	@Override
 	@Transactional(readOnly = true)

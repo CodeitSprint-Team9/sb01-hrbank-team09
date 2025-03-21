@@ -2,6 +2,7 @@ package com.team09.sb01hrbank09.repository;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -27,7 +28,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 
 	void deleteById(Long id);
 
-	Long countByStatusAndHireDateFromBetween(EmployeeStatus status, Instant start, Instant end);
+	Long countByStatusAndHireDateFromBetween(EmployeeStatus status, LocalDate start, LocalDate end);
 
 
 
@@ -40,8 +41,8 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
     GROUP BY periodDate 
     ORDER BY MIN(e.hireDateFrom)
 """)
-	List<Object[]> findEmployeeTrend(@Param("startedAt") Instant startedAt,
-		@Param("endedAt") Instant endedAt,
+	List<Object[]> findEmployeeTrend(@Param("startedAt") LocalDate startedAt,
+		@Param("endedAt") LocalDate endedAt,
 		@Param("gap") String gap);
 
 	@Query("SELECT e.position, COUNT(e), " +
@@ -72,7 +73,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 		@Param("position") String position,
 		@Param("hireDateFrom") LocalDateTime hireDateFrom,
 		@Param("hireDateTo") LocalDateTime hireDateTo,
-		@Param("status") String status,
+		@Param("status") EmployeeStatus status,
 		@Param("idAfter") Long idAfter,
 		Pageable pageable);
 }
