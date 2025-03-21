@@ -126,7 +126,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 	public CursorPageResponseEmployeeDto findEmployeeList(
 		String nameOrEmail, String employeeNumber, String departmentName, String position,
 		LocalDate hireDateFrom, LocalDate hireDateTo, String status, Long idAfter,
-		Object cursor, int size, String sortField, String sortDirection) {
+		Long cursor, int size, String sortField, String sortDirection) {
 
 		Sort.Direction direction = "desc".equalsIgnoreCase(sortDirection) ? Sort.Direction.DESC : Sort.Direction.ASC;
 		Sort sort = Sort.by(direction, sortField);
