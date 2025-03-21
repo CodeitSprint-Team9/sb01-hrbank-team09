@@ -2,8 +2,6 @@ package com.team09.sb01hrbank09.controller;
 
 import java.io.IOException;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.format.annotation.DateTimeFormat;
@@ -20,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.team09.sb01hrbank09.api.EmployeeApi;
 import com.team09.sb01hrbank09.dto.entityDto.EmployeeDistributionDto;
 import com.team09.sb01hrbank09.dto.entityDto.EmployeeDto;
 import com.team09.sb01hrbank09.dto.entityDto.EmployeeTrendDto;
@@ -34,7 +33,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/employees")
-public class EmployeeController {
+public class EmployeeController implements EmployeeApi {
 
 	private final EmployeeServiceInterface employeeServiceInterface;
 
@@ -54,7 +53,7 @@ public class EmployeeController {
 	}
 
 	@GetMapping
-	ResponseEntity<CursorPageResponseEmployeeDto> findEmployeeList(
+	public ResponseEntity<CursorPageResponseEmployeeDto> findEmployeeList(
 		@RequestParam(required = false) String nameOrEmail,
 		@RequestParam(required = false) String employeeNumber,
 		@RequestParam(required = false) String departmentName,
@@ -88,14 +87,14 @@ public class EmployeeController {
 	}
 
 	@GetMapping("/{id}")
-	ResponseEntity<EmployeeDto> findEmployeeById(@PathVariable Long id) {
+	public ResponseEntity<EmployeeDto> findEmployeeById(@PathVariable Long id) {
 		EmployeeDto response = employeeServiceInterface.findEmployeeById(id);
 
 		return ResponseEntity.ok(response);
 	}
 
 	@DeleteMapping("/{id}")
-	ResponseEntity<EmployeeDto> deleteEmployee(@PathVariable Long id, HttpServletRequest request) {
+	public ResponseEntity<EmployeeDto> deleteEmployee(@PathVariable Long id, HttpServletRequest request) {
 		String ipAddress = request.getHeader("X-Forwarded-For");
 		if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
 			ipAddress = request.getRemoteAddr();
@@ -109,7 +108,7 @@ public class EmployeeController {
 	}
 
 	@PatchMapping("/{id}")
-	ResponseEntity<EmployeeDto> updateEmployee(@PathVariable Long id,
+	public ResponseEntity<EmployeeDto> updateEmployee(@PathVariable Long id,
 		@RequestPart("employee") EmployeeUpdateRequest employeeUpdateRequest,
 		@RequestPart(value = "profile", required = false) MultipartFile profileImage,
 		HttpServletRequest request) throws IOException {
@@ -124,7 +123,7 @@ public class EmployeeController {
 	}
 
 	@GetMapping("/stats/trend")
-	ResponseEntity<List<EmployeeTrendDto>> getEmployeeTrend(
+	public ResponseEntity<List<EmployeeTrendDto>> getEmployeeTrend(
 		@RequestParam(required = false) LocalDate from,
 		@RequestParam(required = false) LocalDate to,
 		@RequestParam(required = false, defaultValue = "month") String unit) {
@@ -144,7 +143,7 @@ public class EmployeeController {
 	}
 
 	@GetMapping("/stats/distribution")
-	ResponseEntity<List<EmployeeDistributionDto>> getEmployeeDistributaion(
+	public ResponseEntity<List<EmployeeDistributionDto>> getEmployeeDistributaion(
 		@RequestParam(required = false, defaultValue = "department") String groupBy,
 		@RequestParam(required = false, defaultValue = "ACTIVE") String status) {
 		List<EmployeeDistributionDto> response = employeeServiceInterface.getEmployeeDistributaion(groupBy, status);

@@ -1,11 +1,8 @@
 package com.team09.sb01hrbank09.controller;
 
 import java.io.ByteArrayInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -17,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import com.team09.sb01hrbank09.api.FileApi;
 import com.team09.sb01hrbank09.entity.File;
 import com.team09.sb01hrbank09.service.FileServiceInterface;
 
@@ -25,7 +23,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/files")
-public class FileController {
+public class FileController implements FileApi {
 
 	private final FileServiceInterface fileServiceInterface;
 
@@ -33,7 +31,7 @@ public class FileController {
 	@GetMapping("/{id}/download")
 	public ResponseEntity<StreamingResponseBody> downloadFile(@PathVariable Long id) throws IOException {
 		byte[] fileData = fileServiceInterface.downloadFile(id);
-		File file=fileServiceInterface.findById(id);
+		File file = fileServiceInterface.findById(id);
 		if (fileData == null || fileData.length == 0) {
 			throw new IOException("empty");
 		}

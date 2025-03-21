@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.team09.sb01hrbank09.api.ChangeLogApi;
 import com.team09.sb01hrbank09.dto.entityDto.DiffDto;
 import com.team09.sb01hrbank09.dto.request.CursorPageRequestChangeLog;
 import com.team09.sb01hrbank09.dto.response.CursorPageResponseChangeLogDto;
@@ -22,7 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping("/api/change-logs")
 @RequiredArgsConstructor
 @Slf4j
-public class ChangeLogController {
+public class ChangeLogController implements ChangeLogApi {
 
 	private final ChangeLogServiceInterface changeLogService;
 
