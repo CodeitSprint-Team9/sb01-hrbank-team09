@@ -2,7 +2,7 @@ spring:
   application:
     name: sb01-hrbank-09
   datasource:
-    url: jdbc:${URL}
+    url: jdbc:${DATABASE_URL}
     username: ${PGUSER}
     password: ${PGPASSWORD}
   jpa:
