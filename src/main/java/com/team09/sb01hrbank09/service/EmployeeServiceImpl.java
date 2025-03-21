@@ -30,9 +30,11 @@ import org.springframework.web.multipart.MultipartFile;
 import com.team09.sb01hrbank09.dto.entityDto.EmployeeDistributionDto;
 import com.team09.sb01hrbank09.dto.entityDto.EmployeeDto;
 import com.team09.sb01hrbank09.dto.entityDto.EmployeeTrendDto;
+import com.team09.sb01hrbank09.dto.request.CursorPageRequestBackupDto;
 import com.team09.sb01hrbank09.dto.request.EmployeeCreateRequest;
 import com.team09.sb01hrbank09.dto.request.EmployeeUpdateRequest;
 import com.team09.sb01hrbank09.dto.response.CursorPageResponseEmployeeDto;
+import com.team09.sb01hrbank09.entity.Backup;
 import com.team09.sb01hrbank09.entity.Department;
 import com.team09.sb01hrbank09.entity.Employee;
 import com.team09.sb01hrbank09.entity.Enum.ChangeLogType;
@@ -121,83 +123,74 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 
 	@Override
 	@Transactional(readOnly = true)
-	public CursorPageResponseEmployeeDto findEmployeeList(String nameOrEmail, String employeeNumber,
-		String departmentName, String position, String hireDateFrom, String hireDateTo, String status, Long idAfter,
-		String cursor, int size, String sortField, String sortDirection) {
+	public CursorPageResponseEmployeeDto findEmployeeList(
+		String nameOrEmail, String employeeNumber, String departmentName, String position,
+		LocalDate hireDateFrom, LocalDate hireDateTo, String status, Long idAfter,
+		Object cursor, int size, String sortField, String sortDirection) {
 
-		// 날짜를 Instant로 변환
-		Instant hireDateFromInstant = hireDateFrom != null ? Instant.parse(hireDateFrom) : null;
-		Instant hireDateToInstant = hireDateTo != null ? Instant.parse(hireDateTo) : null;
+		Sort.Direction direction = "desc".equalsIgnoreCase(sortDirection) ? Sort.Direction.DESC : Sort.Direction.ASC;
 
-		// 정렬 필드와 방향을 설정
-		Sort.Order sortOrder =
-			sortDirection.equalsIgnoreCase("desc") ? Sort.Order.desc(sortField) : Sort.Order.asc(sortField);
-		Sort sort = Sort.by(sortOrder);
-
-		// 커서 기반 페이지네이션을 위한 Pageable 객체 생성
-		Pageable pageable = PageRequest.of(cursor != null ? Integer.parseInt(cursor) : 0, size, sort);
-
-		// 필터를 적용한 직원 리스트 조회
-		LocalDateTime hireDateFromTimestamp =
-			hireDateFromInstant != null ? LocalDateTime.from(hireDateFromInstant) : null;
-		LocalDateTime hireDateToTimestamp = hireDateToInstant != null ? LocalDateTime.from(hireDateToInstant) : null;
-
-		EmployeeStatus employeeStatus = null;
-		if (status != null) {
-			try {
-				employeeStatus = EmployeeStatus.valueOf(status.toUpperCase()); // Enum 변환
-			} catch (IllegalArgumentException e) {
-				throw new NoSuchElementException("Invalid status value: " + status); // 예외 처리
-			}
+		// 정렬 필드 설정
+		String sortProperty;
+		switch (sortField.toLowerCase()) {
+			case "employeenumber":
+				sortProperty = "employeeNumber";
+				break;
+			case "hiredate":
+				sortProperty = "hireDate";
+				break;
+			case "position":
+				sortProperty = "position"; // position 정렬 옵션 추가
+				break;
+			case "name":
+			default:
+				sortProperty = "name";
+				break;
 		}
 
-		// 직원 목록을 필터링하여 조회 (필터 및 페이징 처리)
-		Page<Employee> employeePage = employeeRepository.findEmployeesWithFilters(
-			nameOrEmail, employeeNumber, departmentName, position,
-			hireDateFromTimestamp, hireDateToTimestamp,
-			employeeStatus, idAfter, pageable
-		);
+		// 페이지 및 정렬 정보 설정
+		Sort sort = Sort.by(direction, sortProperty);
 
-		// 페이지네이션 처리된 직원 목록을 DTO로 변환
-		List<EmployeeDto> employeeDtos = employeePage.getContent().stream()
-			.map(employee -> new EmployeeDto(
-				employee.getId(),
-				employee.getName(),
-				employee.getEmail(),
-				employee.getEmployeeNumber(),
-				employee.getDepartment().getId(),
-				employee.getDepartment().getName(),
-				employee.getPosition(),
-				employee.getHireDateFrom(),
-				employee.getStatus().toString(),
-				Optional.ofNullable(employee.getFile()).map(file -> file.getId()).orElse(null)
-			))
+		Pageable pageable = PageRequest.of(0, size + 1, sort);
+
+		List<Employee> employees = employeeRepository.findEmployeesWithAdvancedFilters(
+			nameOrEmail,
+			employeeNumber,
+			departmentName,
+			position,
+			hireDateFrom,
+			hireDateTo,
+			status,
+			idAfter,
+			(Long) cursor,
+			pageable);
+
+		// 결과 처리 및 반환
+		boolean hasNext = false;
+		if (employees.size() > size) {
+			hasNext = true;
+			employees = employees.subList(0, size);
+		}
+
+		Long nextIdAfter = hasNext ? employees.get(employees.size() - 1).getId() : null;
+
+		Long nextCursor = hasNext ? employees.get(employees.size() - 1).getId() : null;
+
+		List<EmployeeDto> employeeDtos = employees.stream()
+			.map(employeeMapper::employeeToDto)
 			.collect(Collectors.toList());
 
-		// 커서 기반 페이지네이션을 위한 커서값 계산
-		String nextCursor = null;
-		Long nextIdAfter = null;
-		boolean hasNext = employeePage.hasNext();
-
-		// 다음 페이지 커서값 및 nextIdAfter 값 설정
-		if (hasNext) {
-			nextCursor = String.valueOf(employeePage.getNumber() + 1); // 다음 페이지의 커서값
-			nextIdAfter = employeePage.getContent().get(employeePage.getContent().size() - 1).getId();
-		}
-
-		// 전체 직원 수 설정
-		Long totalElements = employeePage.getTotalElements();
-
-		// 결과를 CursorPageResponseEmployeeDto로 반환
 		return new CursorPageResponseEmployeeDto(
 			employeeDtos,
-			nextCursor,
+			nextCursor != null ? nextCursor.toString() : null,
 			nextIdAfter,
 			size,
-			totalElements,
+			employeeRepository.count(),
 			hasNext
 		);
 	}
+
+
 
 	@Override
 	@Transactional(readOnly = true)
@@ -344,7 +337,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 			findStatus = EmployeeStatus.ACTIVE;
 		} else
 			findStatus = EmployeeStatus.valueOf(status.toUpperCase());
-		return employeeRepository.countByStatusAndHireDateFromBetween(findStatus, startedAt, endedAt);
+		return employeeRepository.countByStatusAndHireDateBetween(findStatus, startedAt, endedAt);
 	}
 
 	private List<EmployeeDistributionDto> convertDistributionPosition(String status) {
@@ -378,17 +371,26 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 		return distribution;
 	}
 
-	private String escapeSpecialCharacters(String searchTerm) {
-		if (searchTerm == null) {
-			return null;
-		}
-		Pattern specialCharacters = Pattern.compile("[\\(\\)\\[\\]\\{\\}\\^\\$\\.\\*\\+\\?\\|\\\\]");
-		Matcher matcher = specialCharacters.matcher(searchTerm);
-		return matcher.replaceAll("\\\\$0");
-	}
-
 	@Override
 	public Instant getUpdateTime() {
 		return updateTime;
+	}
+
+	private Page<Employee> getEmployees(
+		String nameOrEmail, String employeeNumber, String departmentName, String position,
+		LocalDate hireDateFrom, LocalDate hireDateTo, EmployeeStatus status,
+		LocalDate cursorHireDate, Long cursorId, Pageable pageable, String sortDirection) {
+
+		if (sortDirection.equalsIgnoreCase("asc")) {
+			return employeeRepository.findEmployeesByCursorOrderByIdAsc(
+				nameOrEmail, employeeNumber, departmentName, position,
+				hireDateFrom, hireDateTo, status, cursorHireDate, cursorId, pageable
+			);
+		} else {
+			return employeeRepository.findEmployeesByCursorOrderByIdDesc(
+				nameOrEmail, employeeNumber, departmentName, position,
+				hireDateFrom, hireDateTo, status, cursorHireDate, cursorId, pageable
+			);
+		}
 	}
 }
