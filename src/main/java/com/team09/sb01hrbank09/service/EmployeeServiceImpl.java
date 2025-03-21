@@ -129,43 +129,13 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 		Object cursor, int size, String sortField, String sortDirection) {
 
 		Sort.Direction direction = "desc".equalsIgnoreCase(sortDirection) ? Sort.Direction.DESC : Sort.Direction.ASC;
-
-		// 정렬 필드 설정
-		String sortProperty;
-		switch (sortField.toLowerCase()) {
-			case "employeenumber":
-				sortProperty = "employeeNumber";
-				break;
-			case "hiredate":
-				sortProperty = "hireDate";
-				break;
-			case "position":
-				sortProperty = "position"; // position 정렬 옵션 추가
-				break;
-			case "name":
-			default:
-				sortProperty = "name";
-				break;
-		}
-
-		// 페이지 및 정렬 정보 설정
-		Sort sort = Sort.by(direction, sortProperty);
+		Sort sort = Sort.by(direction, sortField);
 
 		Pageable pageable = PageRequest.of(0, size + 1, sort);
 
 		List<Employee> employees = employeeRepository.findEmployeesWithAdvancedFilters(
-			nameOrEmail,
-			employeeNumber,
-			departmentName,
-			position,
-			hireDateFrom,
-			hireDateTo,
-			status,
-			idAfter,
-			(Long) cursor,
-			pageable);
-
-		// 결과 처리 및 반환
+			nameOrEmail, employeeNumber, departmentName, position, hireDateFrom,
+			hireDateTo, status, idAfter, (Long)cursor, pageable);
 		boolean hasNext = false;
 		if (employees.size() > size) {
 			hasNext = true;
@@ -183,10 +153,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 		return new CursorPageResponseEmployeeDto(
 			employeeDtos,
 			nextCursor != null ? nextCursor.toString() : null,
-			nextIdAfter,
-			size,
-			employeeRepository.count(),
-			hasNext
+			nextIdAfter, size, employeeRepository.count(), hasNext
 		);
 	}
 
@@ -234,7 +201,6 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 
 		Employee employee = employeeRepository.findById(id)
 			.orElseThrow(() -> new NoSuchElementException("Message with id " + id + " not found"));
-		EmployeeDto newEmployee = employeeMapper.employeeToDto(employee);
 		File file = null;
 
 		Department usingDepartment = departmentServiceInterface.findDepartmentEntityById(
@@ -269,8 +235,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 		updateTime = Instant.now();
 
 		EmployeeDto oldEmployee = employeeMapper.employeeToDto(employee);
-		//만들어지면 넣기
-		//changeLogServiceInterface.createChangeLog();
+
 
 		EmployeeDto afterEmployee = employeeMapper.employeeToDto(employee);
 
