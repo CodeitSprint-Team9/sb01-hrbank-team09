@@ -101,10 +101,10 @@ public class ChangeLogServiceImpl implements ChangeLogServiceInterface {
 		String sortDirection = validateSortDirection(request.sortDirection());
 		log.info("정렬 방향: {}", sortDirection);
 
-		// 정렬 기준이 변경되었으면 커서 초기화
+		/*	// 정렬 기준이 변경되었으면 커서 초기화
 		if (request.cursor() == null || isSortChanged(request)) {
 			request = CursorPageRequestChangeLog.copy(request, null, null);
-		}
+		}*/
 
 		// type을 ChangeLogType으로 변환
 		ChangeLogType type = request.type() != null ? ChangeLogType.valueOf(request.type()) : null;
@@ -160,15 +160,11 @@ public class ChangeLogServiceImpl implements ChangeLogServiceInterface {
 
 	private Page<ChangeLog> getChangeLogs(CursorPageRequestChangeLog request, String sortDirection,
 		ChangeLogType type) {
-		Pageable pageable = PageRequest.of(
-			0,
-			request.size(),
-			sortDirection.equalsIgnoreCase("asc") ? Sort.by(request.sortField()).ascending() :
-				Sort.by(request.sortField()).descending()
-		);
+		Sort sort = Sort.by(Sort.Direction.fromString(request.sortDirection()), request.sortField());
+		Pageable pageable = PageRequest.of(0, request.size() + 1, sort);
+
 		if (request.idAfter() == null) {
 			log.info("idAfter는 null");
-
 			// idAfter 조건 포함 조회
 			if ("asc".equalsIgnoreCase(sortDirection)) {
 				return changeLogRepository.findChangeLogsWithoutIdAfterAsc(
@@ -225,10 +221,21 @@ public class ChangeLogServiceImpl implements ChangeLogServiceInterface {
 		CursorPageRequestChangeLog request) {
 		Long nextIdAfter = null;
 		String nextCursor = null;
-		boolean hasNext = dtos.hasNext();
+		boolean hasNext = false;
 
-		if (!dtos.isEmpty()) {
-			ChangeLogDto lastLog = dtos.getContent().get(dtos.getContent().size() - 1);
+		// 새로운 리스트로 복사하여 수정 가능하게 만들기
+		List<ChangeLogDto> content = new ArrayList<>(dtos.getContent());
+
+		// 데이터가 size + 1보다 많을 경우
+		if (content.size() > request.size()) {
+			// 마지막 데이터를 제외한 데이터를 반환
+			hasNext = true;
+			content.remove(content.size() - 1);  // 마지막 데이터는 제외
+		}
+
+		// 커서 생성 (마지막 데이터를 기준으로 커서 생성)
+		if (!content.isEmpty()) {
+			ChangeLogDto lastLog = content.get(content.size() - 1);
 			nextIdAfter = lastLog.id();
 			nextCursor = generateCursor(lastLog, request.sortField());
 		}
@@ -242,10 +249,10 @@ public class ChangeLogServiceImpl implements ChangeLogServiceInterface {
 		);
 
 		return new CursorPageResponseChangeLogDto(
-			dtos.getContent(),
+			content,
 			nextCursor,
 			nextIdAfter,
-			dtos.getNumberOfElements(),
+			content.size(),
 			totalCount,
 			hasNext
 		);
@@ -282,23 +289,28 @@ public class ChangeLogServiceImpl implements ChangeLogServiceInterface {
 		return diffs;
 	}
 
+	private static final Set<String> IGNORED_FIELDS = Set.of("id", "departmentId", "profileImageId");
+
 	private List<DiffDto> compareDiffs(String beforeJson, String afterJson) {
 		List<DiffDto> diffs = new ArrayList<>();
 		ObjectMapper objectMapper = new ObjectMapper();
 
 		try {
-			// beforeJson 또는 afterJson이 빈 객체로 저장되었으므로, null일 경우 빈 객체로 취급
 			Map<String, Object> beforeMap = (beforeJson != null && !beforeJson.isEmpty())
 				? objectMapper.readValue(beforeJson, Map.class) : new HashMap<>();
 			Map<String, Object> afterMap = (afterJson != null && !afterJson.isEmpty())
 				? objectMapper.readValue(afterJson, Map.class) : new HashMap<>();
 
-			// 모든 키를 비교
 			Set<String> allKeys = new HashSet<>();
 			allKeys.addAll(beforeMap.keySet());
 			allKeys.addAll(afterMap.keySet());
 
 			for (String key : allKeys) {
+				// 특정 필드는 비교 제외
+				if (IGNORED_FIELDS.contains(key)) {
+					continue;
+				}
+
 				Object beforeValue = beforeMap.get(key);
 				Object afterValue = afterMap.get(key);
 
@@ -307,7 +319,7 @@ public class ChangeLogServiceImpl implements ChangeLogServiceInterface {
 
 				if (!Objects.equals(beforeValue, afterValue)) {
 					diffs.add(new DiffDto(
-						mappedPropertyName,  // ✅ 변환된 propertyName 사용
+						mappedPropertyName,
 						beforeValue != null ? beforeValue.toString() : null,
 						afterValue != null ? afterValue.toString() : null
 					));
@@ -317,7 +329,6 @@ public class ChangeLogServiceImpl implements ChangeLogServiceInterface {
 			throw new RuntimeException("JSON parsing error", e);
 		}
 
-		//변경된 부분이 없다면 빈 객체 반환 []
 		if (diffs.isEmpty()) {
 			log.info("변경된 부분이 없습니다.");
 		}
