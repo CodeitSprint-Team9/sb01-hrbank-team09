@@ -5,6 +5,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Year;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -85,7 +86,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 		}
 
 		String uniquePart = UUID.randomUUID().toString().replaceAll("-", "").substring(0, 14);
-		String employeeNumber = "EMP-" + "년도" + uniquePart;
+		String employeeNumber = "EMP-" + Year.now().getValue() + "-" + uniquePart;
 		Employee employee = Employee.createEmployee(employeeCreateRequest.name(), employeeCreateRequest.email(),
 			employeeNumber, employeeCreateRequest.position(),
 			employeeCreateRequest.hireDate(), EmployeeStatus.ACTIVE, file, usingDepartment);
@@ -219,7 +220,6 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 			this.updateTime = Instant.now();
 			//로그작업
 
-
 			log.info("이벤트 발행시작...");
 			changeLogServiceInterface.createChangeLog(
 				ChangeLogType.DELETED, employee.getEmployeeNumber(), "직원 삭제", ipAddress,
@@ -280,9 +280,16 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 
 		EmployeeDto afterEmployee = employeeMapper.employeeToDto(employee);
 
+		String memo;
+		if (employeeUpdateRequest.memo() == null) {
+			memo = "직원 수정";
+		} else {
+			memo = employeeUpdateRequest.memo();
+		}
+
 		log.info("Change-logs 생성중...");
 		changeLogServiceInterface.createChangeLog(
-			ChangeLogType.UPDATED, employee.getEmployeeNumber(), "직원 삭제", ipAddress,
+			ChangeLogType.UPDATED, employee.getEmployeeNumber(), memo, ipAddress,
 			oldEmployee, afterEmployee
 
 		);
@@ -303,16 +310,16 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 			Instant periodDate;
 
 			if (result[0] instanceof Timestamp) {
-				periodDate = ((Timestamp) result[0]).toInstant();
+				periodDate = ((Timestamp)result[0]).toInstant();
 			} else if (result[0] instanceof LocalDate) {
-				periodDate = ((LocalDate) result[0]).atStartOfDay(ZoneOffset.UTC).toInstant();
+				periodDate = ((LocalDate)result[0]).atStartOfDay(ZoneOffset.UTC).toInstant();
 			} else {
-				periodDate = (Instant) result[0];
+				periodDate = (Instant)result[0];
 			}
 
-			Long count = ((Number) result[1]).longValue();
+			Long count = ((Number)result[1]).longValue();
 			Long change = (previousCount == null) ? 0L : count - previousCount;
-			Double changeRate = (previousCount == null || previousCount == 0L) ? 0.0 : (double) change / previousCount;
+			Double changeRate = (previousCount == null || previousCount == 0L) ? 0.0 : (double)change / previousCount;
 
 			trendList.add(new EmployeeTrendDto(periodDate, count, change, changeRate));
 			previousCount = count;

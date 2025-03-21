@@ -38,7 +38,7 @@ public class ChangeLog {
 	@Column(nullable = false, length = 50)
 	private String ipAddress;
 
-	@Column(nullable = false)
+	@Column(nullable = false, columnDefinition = "TIMESTAMP WITH TIME ZONE")
 	private Instant at;
 
 	@JdbcTypeCode(SqlTypes.JSON) // Hibernate에서 JSONB 매핑 활성화
