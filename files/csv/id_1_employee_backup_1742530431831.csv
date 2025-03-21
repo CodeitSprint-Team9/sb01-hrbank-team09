@@ -1,0 +1,4 @@
+ID,EmployeeNumber,Name,Email,DepartmentName,Position,HireDate,Status
+1,EMP-2025-6aa3cc42337544,감자1,감자@감자.com,감자,김치,2023-11-07,ACTIVE
+2,EMP-2025-f11f6a6e1b9043,감자2,감자2@감자.com,감자,감자,2023-06-21,ACTIVE
+3,EMP-2025-552843b35b4948,감자3,감자3@감자.com,감자,감자?,2025-03-21,ACTIVE
