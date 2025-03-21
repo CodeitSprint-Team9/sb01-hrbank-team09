@@ -24,47 +24,47 @@ public interface ChangeLogRepository extends JpaRepository<ChangeLog, Long> {
 	void deleteById(Long id);
 
 	@Query("SELECT c FROM ChangeLog c WHERE " +
-		"(:employeeNumber IS NULL OR c.employeeNumber LIKE %?1%) AND " +
-		"(:memo IS NULL OR c.memo LIKE %?2%) AND " +
-		"(:ipAddress IS NULL OR c.ipAddress LIKE %?3%) AND " +
-		"(:type IS NULL OR c.type = ?4) AND " +
-		"(:atFrom IS NULL OR c.at >= ?5) AND " +
-		"(:atTo IS NULL OR c.at <= ?6) AND " +
-		"(:idAfter IS NULL OR c.id > ?7) " +
+		"(:employeeNumber IS NULL OR c.employeeNumber LIKE %:employeeNumber%) AND " +
+		"(:memo IS NULL OR c.memo LIKE %:memo%) AND " +
+		"(:ipAddress IS NULL OR c.ipAddress LIKE %:ipAddress%) AND " +
+		"(:type IS NULL OR c.type = :type) AND " +
+		"(c.at >= :atFrom) AND " +
+		"(c.at <= :atTo) AND " +
+		"(:idAfter IS NULL OR c.id > :idAfter) " +
 		"ORDER BY c.at ASC")
 	Page<ChangeLog> findChangeLogsAsc(String employeeNumber, String memo, String ipAddress, ChangeLogType type,
 		Instant atFrom,
 		Instant atTo, Long idAfter, Pageable pageable);
 
 	@Query("SELECT c FROM ChangeLog c WHERE " +
-		"(:employeeNumber IS NULL OR c.employeeNumber LIKE %?1%) AND " +
-		"(:memo IS NULL OR c.memo LIKE %?2%) AND " +
-		"(:ipAddress IS NULL OR c.ipAddress LIKE %?3%) AND " +
-		"(:type IS NULL OR c.type = ?4) AND " +
-		"(:atFrom IS NULL OR c.at >= ?5) AND " +
-		"(:atTo IS NULL OR c.at <= ?6) AND " +
-		"(:idAfter IS NULL OR c.id > ?7) ")
+		"(:employeeNumber IS NULL OR c.employeeNumber LIKE %:employeeNumber%) AND " +
+		"(:memo IS NULL OR c.memo LIKE %:memo%) AND " +
+		"(:ipAddress IS NULL OR c.ipAddress LIKE %:ipAddress%) AND " +
+		"(:type IS NULL OR c.type = :type) AND " +
+		"(c.at >= :atFrom) AND " +
+		"(c.at <= :atTo) AND " +
+		"(:idAfter IS NULL OR c.id > :idAfter) ")
 	Page<ChangeLog> findChangeLogsDesc(String employeeNumber, String memo, String ipAddress, ChangeLogType type,
 		Instant atFrom, Instant atTo, Long idAfter, Pageable pageable);
 
 	@Query("SELECT c FROM ChangeLog c WHERE " +
-		"(:employeeNumber IS NULL OR c.employeeNumber LIKE %?1%) AND " +
-		"(:memo IS NULL OR c.memo LIKE %?2%) AND " +
-		"(:ipAddress IS NULL OR c.ipAddress LIKE %?3%) AND " +
-		"(:type IS NULL OR c.type = ?4) AND " +
-		"(:atFrom IS NULL OR c.at >= ?5) AND " +
-		"(:atTo IS NULL OR c.at <= ?6) ")
+		"(:employeeNumber IS NULL OR c.employeeNumber LIKE %:employeeNumber%) AND " +
+		"(:memo IS NULL OR c.memo LIKE %:memo%) AND " +
+		"(:ipAddress IS NULL OR c.ipAddress LIKE %:ipAddress%) AND " +
+		"(:type IS NULL OR c.type = :type) AND " +
+		"(c.at >= :atFrom) AND " +
+		"(c.at <= :atTo) ")
 	Page<ChangeLog> findChangeLogsWithoutIdAfterDesc(String employeeNumber, String memo, String ipAddress,
 		ChangeLogType type, Instant atFrom, Instant atTo,
 		Pageable pageable);
 
 	@Query("SELECT c FROM ChangeLog c WHERE " +
-		"(:employeeNumber IS NULL OR c.employeeNumber LIKE %?1%) AND " +
-		"(:memo IS NULL OR c.memo LIKE %?2%) AND " +
-		"(:ipAddress IS NULL OR c.ipAddress LIKE %?3%) AND " +
-		"(:type IS NULL OR c.type = ?4) AND " +
-		"(:atFrom IS NULL OR c.at >= ?5) AND " +
-		"(:atTo IS NULL OR c.at <= ?6) " +
+		"(:employeeNumber IS NULL OR c.employeeNumber LIKE %:employeeNumber%) AND " +
+		"(:memo IS NULL OR c.memo LIKE %:memo%) AND " +
+		"(:ipAddress IS NULL OR c.ipAddress LIKE %:ipAddress%) AND " +
+		"(:type IS NULL OR c.type = :type) AND " +
+		"(c.at >= :atFrom) AND " +
+		"(c.at <= :atTo) " +
 		"ORDER BY c.at ASC")
 	Page<ChangeLog> findChangeLogsWithoutIdAfterAsc(String employeeNumber, String memo, String ipAddress,
 		ChangeLogType type, Instant atFrom, Instant atTo,
@@ -75,8 +75,8 @@ public interface ChangeLogRepository extends JpaRepository<ChangeLog, Long> {
 		"(:memo IS NULL OR c.memo LIKE %?2%) AND " +
 		"(:ipAddress IS NULL OR c.ipAddress LIKE %?3%) AND " +
 		"(:type IS NULL OR c.type = ?4) AND " +
-		"(:atFrom IS NULL OR c.at >= ?5) AND " +
-		"(:atTo IS NULL OR c.at <= ?6)")
+		"(c.at >= ?5) AND " +
+		"(c.at <= ?6)")
 	Long countChangeLogs(
 		@Param("employeeNumber") String employeeNumber,
 		@Param("memo") String memo,
