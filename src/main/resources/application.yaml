@@ -2,7 +2,9 @@ spring:
   application:
     name: sb01-hrbank-09
   datasource:
-    url: ${DATABASE_URL} # Railway에서 제공하는 DATABASE_URL 사용
+    url: jdbc:postgresql://${PGHOST}:${PGPORT}/${PGDATABASE}
+    username: ${PGUSER}
+    password: ${PGPASSWORD}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -11,7 +13,6 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-
 logging:
   level:
     org.hibernate.SQL: debug
