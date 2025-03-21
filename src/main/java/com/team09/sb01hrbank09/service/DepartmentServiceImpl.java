@@ -83,16 +83,34 @@ public class DepartmentServiceImpl implements DepartmentServiceInterface {
 		Sort.Order sortOrder =
 			sortDirection.equalsIgnoreCase("desc") ? Sort.Order.desc(sortField) : Sort.Order.asc(sortField);
 		Sort sort = Sort.by(sortOrder);
-		Pageable pageable = PageRequest.of(request.cursor() != null ? Integer.parseInt(request.cursor()) : 0,
-			request.size(), sort);
-		Page<Department> departments = departmentRepository.findDepartment(request.nameOrDescription(),
-			request.idAfter(), pageable);
+		Pageable pageable = PageRequest.of(0, request.size() + 1, sort);
 
-		List<DepartmentDto> departmentDtos = departments.getContent().stream()
+		// Pageable pageable = PageRequest.of(request.cursor() != null ? Integer.parseInt(request.cursor()) : 0,
+		// 	request.size(), sort);
+
+		Page<Department> departments;
+
+		if (sortOrder.isAscending()) {
+			departments = departmentRepository.findDepartmentOrderByIdAsc(request.nameOrDescription(), request.idAfter(), pageable);
+		}
+		else {
+			departments = departmentRepository.findDepartmentOrderByIdDesc(request.nameOrDescription(), request.idAfter(), pageable);
+		}
+
+		// //Page<Department> departments = departmentRepository.findDepartment(request.nameOrDescription(),
+		// 	request.idAfter(), pageable);
+		List<Department> departmentList = departments.getContent();
+
+		boolean hasNext = departmentList.size() > request.size();
+		if (hasNext) {
+			departmentList = departmentList.subList(0, request.size());
+		}
+
+		List<DepartmentDto> departmentDtos = departmentList.stream()
 			.map(departmentMapper::departmentToDto)
 			.toList();
 
-		return toCursorPageResponse(departmentDtos, request, departments);
+		return toCursorPageResponse(departmentDtos, request, departments, hasNext);
 	}
 
 	private void validateRequest(CursorPageRequestDepartment request) {
@@ -107,17 +125,18 @@ public class DepartmentServiceImpl implements DepartmentServiceInterface {
 	}
 
 	private CursorPageResponseDepartmentDto toCursorPageResponse(List<DepartmentDto> dtos,
-		CursorPageRequestDepartment request, Page<Department> departments) {
+		CursorPageRequestDepartment request, Page<Department> departments, boolean hasNext) {
 		Long nextIdAfter = null;
 		String nextCursor = null;
-		boolean hasNext = departments.hasNext();
-
-		if (hasNext) {
-			nextCursor = String.valueOf(departments.getNumber() + 1);
-			nextIdAfter = departments.getContent().get(departments.getContent().size() - 1).getId();
+		if (!dtos.isEmpty()) {
+			DepartmentDto lastDepartment = dtos.get(dtos.size() - 1);
+			nextIdAfter = lastDepartment.id();
+			nextCursor = String.valueOf(lastDepartment.name()); // TODO:
 		}
 
-		Long totalElements = departments.getTotalElements();
+		Long totalElements = departmentRepository.getCount();
+
+		//Long totalElements = departments.getTotalElements();
 
 		return new CursorPageResponseDepartmentDto(
 			dtos,
