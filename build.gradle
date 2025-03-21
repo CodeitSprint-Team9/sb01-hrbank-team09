@@ -39,6 +39,7 @@ dependencies {
 
     implementation 'org.apache.commons:commons-csv:1.9.0'//for csv
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.18.2'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0'
 }
 
 tasks.named('test') {
