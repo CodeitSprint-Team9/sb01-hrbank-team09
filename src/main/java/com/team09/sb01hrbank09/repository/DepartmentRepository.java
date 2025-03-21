@@ -30,39 +30,7 @@ public interface DepartmentRepository extends JpaRepository<Department, Long> {
 		SELECT d FROM Department d WHERE
 		  (:nameOrDescription IS NULL OR d.name LIKE %:nameOrDescription% OR d.description LIKE %:nameOrDescription%) AND
 		  (:idAfter IS NULL OR d.id > :idAfter)
-		  ORDER BY d.name ASC
 		     		""")
-	List<Department> findDepartmentNameAsc(String nameOrDescription, Long idAfter, String sortField);
-
-	@Query("""
-		SELECT d FROM Department d WHERE
-		  (:nameOrDescription IS NULL OR d.name LIKE %:nameOrDescription% OR d.description LIKE %:nameOrDescription%) AND
-		  (:idAfter IS NULL OR d.id > :idAfter)
-		  ORDER BY d.establishedDate ASC
-		     		""")
-	List<Department> findDepartmentDateAsc(String nameOrDescription, Long idAfter, String sortField);
-
-	@Query("""
-		  SELECT d FROM Department d WHERE
-		  (:nameOrDescription IS NULL OR d.name LIKE %:nameOrDescription% OR d.description LIKE %:nameOrDescription%) AND
-		  (:idAfter IS NULL OR d.id > :idAfter)
-		ORDER BY d.name DESC
-		                   """)
-	List<Department> findDepartmentNameDesc(String nameOrDescription, Long idAfter, String sortField);
-
-	@Query("""
-		  SELECT d FROM Department d WHERE
-		  (:nameOrDescription IS NULL OR d.name LIKE %:nameOrDescription% OR d.description LIKE %:nameOrDescription%) AND
-		  (:idAfter IS NULL OR d.id > :idAfter)
-		ORDER BY d.establishedDate DESC
-		                   """)
-	List<Department> findDepartmentDateDesc(String nameOrDescription, Long idAfter, String sortField);
-
-	@Query("""
-		   SELECT COUNT(d) FROM Department d WHERE
-		   (:nameOrDescription IS NULL OR d.name LIKE %:nameOrDescription%) AND
-		   (:nameOrDescription IS NULL OR d.description LIKE %:nameOrDescription%)
-		""")
-	int getTotalElements(String nameOrDescription);
+	Page<Department> findDepartment(String nameOrDescription, Long idAfter, Pageable pageable);
 
 }

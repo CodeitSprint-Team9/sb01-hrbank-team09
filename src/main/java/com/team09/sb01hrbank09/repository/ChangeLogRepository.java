@@ -30,8 +30,7 @@ public interface ChangeLogRepository extends JpaRepository<ChangeLog, Long> {
 		"(:type IS NULL OR c.type = :type) AND " +
 		"(c.at >= :atFrom) AND " +
 		"(c.at <= :atTo) AND " +
-		"(:idAfter IS NULL OR c.id > :idAfter) " +
-		"ORDER BY c.at ASC")
+		"(:idAfter IS NULL OR c.id > :idAfter) ")
 	Page<ChangeLog> findChangeLogsAsc(String employeeNumber, String memo, String ipAddress, ChangeLogType type,
 		Instant atFrom,
 		Instant atTo, Long idAfter, Pageable pageable);
@@ -64,8 +63,7 @@ public interface ChangeLogRepository extends JpaRepository<ChangeLog, Long> {
 		"(:ipAddress IS NULL OR c.ipAddress LIKE %:ipAddress%) AND " +
 		"(:type IS NULL OR c.type = :type) AND " +
 		"(c.at >= :atFrom) AND " +
-		"(c.at <= :atTo) " +
-		"ORDER BY c.at ASC")
+		"(c.at <= :atTo) ")
 	Page<ChangeLog> findChangeLogsWithoutIdAfterAsc(String employeeNumber, String memo, String ipAddress,
 		ChangeLogType type, Instant atFrom, Instant atTo,
 		Pageable pageable);

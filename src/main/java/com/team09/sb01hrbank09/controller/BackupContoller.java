@@ -51,6 +51,7 @@ public class BackupContoller {
 	) {
 		System.out.println("startedAtFrom = " + startedAtFrom);
 
+		worker = worker != null ? worker : "";
 		startedAtFrom = startedAtFrom != null ? startedAtFrom : Instant.parse("1970-01-01T00:00:00Z");
 		startedAtTo = startedAtTo != null ? startedAtTo : Instant.parse("9999-12-31T23:59:59Z");
 
