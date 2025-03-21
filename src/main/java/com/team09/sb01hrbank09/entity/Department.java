@@ -1,6 +1,5 @@
 package com.team09.sb01hrbank09.entity;
 
-import java.time.Instant;
 import java.time.LocalDate;
 
 import jakarta.persistence.Column;
@@ -48,10 +47,6 @@ public class Department {
 	public void updateDepartmentDescription(String updateDescription) {
 		this.description = updateDescription;
 	}
-
-//	public void updateCreatedLocalDate() {
-//		this.establishedDate = Instant.now();
-//	}
 
 	public void updateEstablishedDate(LocalDate establishedDate) {
 		this.establishedDate = establishedDate;

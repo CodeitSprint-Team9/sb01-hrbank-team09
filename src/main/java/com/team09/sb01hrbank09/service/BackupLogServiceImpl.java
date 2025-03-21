@@ -85,25 +85,25 @@ public class BackupLogServiceImpl implements BackupLogServiceInterface {
 	@Transactional(readOnly = true)
 	public CursorPageResponseBackupDto findBackupList(CursorPageRequestBackupDto request) {
 		Sort sort = Sort.by(Sort.Direction.fromString(request.sortDirection()), request.sortField());
-		Pageable pageable = PageRequest.of(0, request.size(), sort);
+		Pageable pageable = PageRequest.of(0, request.size() + 1, sort);
 
 		Page<Backup> backups = getBackups(request, pageable);
+		List<Backup> backupList = backups.getContent();
 
-		List<BackupDto> backupDtos = backups.getContent().stream()
+		boolean hasNext = backupList.size() > request.size();
+		if (hasNext) {
+			backupList = backupList.subList(0, request.size());
+		}
+
+		List<BackupDto> backupDtos = backupList.stream()
 			.map(backupMapper::backupToDto)
 			.toList();
 
 		Long nextIdAfter = null;
 		String nextCursor = null;
-		boolean hasNext = false;
 		if (!backupDtos.isEmpty()) {
 			nextIdAfter = backupDtos.get(backupDtos.size() - 1).id();
 			nextCursor = String.valueOf(backupDtos.get(backupDtos.size() - 1).startedAt());
-
-			// hasNext = backups.hasNext();
-			Page<Backup> nextBackups = getBackups(CursorPageRequestBackupDto.copy(request, nextIdAfter, nextCursor),
-				pageable);
-			hasNext = !nextBackups.isEmpty();
 		}
 
 		Long totalCount = backupRepository.countBackup(
@@ -124,7 +124,7 @@ public class BackupLogServiceImpl implements BackupLogServiceInterface {
 	}
 
 	private Page<Backup> getBackups(CursorPageRequestBackupDto request, Pageable pageable) {
-		if (request.sortDirection().equals("asc")) {
+		if (request.sortDirection().equalsIgnoreCase("ASC")) {
 			return backupRepository.findBackupsByCursorOrderByIdAsc(
 				request.worker(),
 				request.status(),
