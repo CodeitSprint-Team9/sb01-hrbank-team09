@@ -20,13 +20,13 @@ public interface BackupRepository extends JpaRepository<Backup, Long> {
 
 	void deleteById(Long id);
 
-	@Query("""
+	@Query(value = """
 		SELECT b FROM Backup b
-		WHERE (:worker IS NULL OR b.worker LIKE CONCAT('%', ?1, '%'))
-				AND (:status IS NULL OR b.status = ?2)
-				AND (:startedAtFrom IS NULL OR b.startedAt >= ?3)
-				AND (:startedAtTo IS NULL OR b.startedAt <= ?4)
-				AND (:idAfter IS NULL OR b.id < ?5)
+		WHERE (:worker IS NULL OR b.worker LIKE %:worker%)
+				AND (:status IS NULL OR b.status = :status)
+				AND (b.startedAt >= :startedAtFrom)
+				AND (b.startedAt <= :startedAtTo)
+				AND (:idAfter IS NULL OR b.id < :idAfter)
 		""")
 	Page<Backup> findBackupsByCursorOrderByIdDesc(
 		@Param("worker") String worker,
@@ -37,13 +37,13 @@ public interface BackupRepository extends JpaRepository<Backup, Long> {
 		Pageable pageable
 	);
 
-	@Query("""
+	@Query(value = """
 		SELECT b FROM Backup b
-		WHERE (:worker IS NULL OR b.worker LIKE CONCAT('%', ?1, '%'))
-				AND (:status IS NULL OR b.status = ?2)
-				AND (:startedAtFrom IS NULL OR b.startedAt >= ?3)
-				AND (:startedAtTo IS NULL OR b.startedAt <= ?4)
-				AND (:idAfter IS NULL OR b.id > ?5)
+		WHERE (:worker IS NULL OR b.worker LIKE %:worker%)
+				AND (:status IS NULL OR b.status = :status)
+				AND (b.startedAt >= :startedAtFrom)
+				AND (b.startedAt <= :startedAtTo)
+				AND (:idAfter IS NULL OR b.id > :idAfter)
 		""")
 	Page<Backup> findBackupsByCursorOrderByIdAsc(
 		@Param("worker") String worker,
@@ -54,12 +54,12 @@ public interface BackupRepository extends JpaRepository<Backup, Long> {
 		Pageable pageable
 	);
 
-	@Query("""
+	@Query(value = """
 		SELECT COUNT(b.id) FROM Backup b
-		WHERE (:worker IS NULL OR b.worker LIKE CONCAT('%', ?1, '%'))
-				AND (:status IS NULL OR b.status = ?2)
-				AND (:startedAtFrom IS NULL OR b.startedAt >= ?3)
-				AND (:startedAtTo IS NULL OR b.startedAt <= ?4)
+		WHERE (:worker IS NULL OR b.worker LIKE %:worker%)
+				AND (:status IS NULL OR b.status = :status)
+				AND (b.startedAt >= :startedAtFrom)
+				AND (b.startedAt <= :startedAtTo)
 		""")
 	Long countBackup(
 		@Param("worker") String worker,

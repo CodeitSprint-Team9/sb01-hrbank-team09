@@ -30,10 +30,10 @@ public class Backup {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@Column(name = "started_at", nullable = false)
+	@Column(name = "started_at", nullable = false, columnDefinition = "TIMESTAMP WITH TIME ZONE")
 	private Instant startedAt;
 
-	@Column(name = "ended_at")
+	@Column(name = "ended_at", columnDefinition = "TIMESTAMP WITH TIME ZONE")
 	private Instant endedAt;
 
 	@Column
