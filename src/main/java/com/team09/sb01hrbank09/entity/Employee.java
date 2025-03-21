@@ -44,8 +44,8 @@ public class Employee {
 	@Column(nullable = false, length = 20)
 	private String position;
 
-	@Column(nullable = false)
-	private LocalDate hireDateFrom;
+	@Column(name = "hire_date", nullable = false)
+	private LocalDate hireDate;
 
 	@Enumerated(STRING)
 	@Column(nullable = false, length = 20)
@@ -61,20 +61,20 @@ public class Employee {
 
 
 	private Employee(String name, String email, String employeeNumber, String position
-		, LocalDate hireDateFrom, EmployeeStatus status, File file, Department department) {
+		, LocalDate hireDate, EmployeeStatus status, File file, Department department) {
 		this.name = name;
 		this.email = email;
 		this.employeeNumber = employeeNumber;
 		this.position = position;
-		this.hireDateFrom = hireDateFrom;
+		this.hireDate = hireDate;
 		this.status = status;
 		this.file = file;
 		this.department = department;
 	}
 
 	public static Employee createEmployee(String name, String email, String employeeNumber, String position,
-		LocalDate hireDateFrom, EmployeeStatus status, File file, Department department) {
-		return new Employee(name, email, employeeNumber, position, hireDateFrom, status, file, department);
+		LocalDate hireDate, EmployeeStatus status, File file, Department department) {
+		return new Employee(name, email, employeeNumber, position, hireDate, status, file, department);
 	}
 
 	public void updatePosition(String position) {
@@ -89,8 +89,8 @@ public class Employee {
 		this.name = name;
 	}
 
-	public void updateHireDateFrom(LocalDate hireDateFrom) {
-		this.hireDateFrom = hireDateFrom;
+	public void updateHireDateFrom(LocalDate hireDate) {
+		this.hireDate = hireDate;
 	}
 
 	public void updateStatus(EmployeeStatus status) {
