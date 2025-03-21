@@ -160,11 +160,11 @@ public class ChangeLogServiceImpl implements ChangeLogServiceInterface {
 
 	private Page<ChangeLog> getChangeLogs(CursorPageRequestChangeLog request, String sortDirection,
 		ChangeLogType type) {
+		Sort sort = Sort.by(Sort.Direction.fromString(request.sortDirection()), request.sortField());
 		Pageable pageable = PageRequest.of(
 			0,
 			request.size(),
-			sortDirection.equalsIgnoreCase("asc") ? Sort.by(request.sortField()).ascending() :
-				Sort.by(request.sortField()).descending()
+			sort
 		);
 		if (request.idAfter() == null) {
 			log.info("idAfter는 null");
