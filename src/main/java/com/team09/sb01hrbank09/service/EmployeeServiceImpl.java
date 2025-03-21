@@ -290,7 +290,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 		log.info("Change-logs 생성중...");
 		changeLogServiceInterface.createChangeLog(
 			ChangeLogType.UPDATED, employee.getEmployeeNumber(), memo, ipAddress,
-			oldEmployee, afterEmployee
+			newEmployee, afterEmployee
 
 		);
 		log.info("change-logs 생성 완료");
