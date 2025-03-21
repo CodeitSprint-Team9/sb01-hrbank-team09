@@ -2,7 +2,7 @@ spring:
   application:
     name: sb01-hrbank-09
   datasource:
-    url: jdbc:${DATABASE_PUBLIC_URL}
+    url: jdbc:${URL}
     username: ${PGUSER}
     password: ${PGPASSWORD}
   jpa:
@@ -14,3 +14,5 @@ logging:
   level:
     org.hibernate.SQL: debug
     org.hibernate.orm.jdbc.bind: trace
+
+#
