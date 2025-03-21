@@ -94,7 +94,7 @@ public class DepartmentServiceImpl implements DepartmentServiceInterface {
 
 		Sort sort = Sort.by(Sort.Direction.fromString(request.sortDirection()), request.sortField());
 		Pageable pageable = PageRequest.of(0, request.size(), sort);
-		List<Department> departments = getDepartments(request, sortDirection);
+		List<Department> departments = getDepartments(request);
 
 
 		//Page<Department> departmentsPage = getDepartments(request, sortDirection);
@@ -116,15 +116,25 @@ public class DepartmentServiceImpl implements DepartmentServiceInterface {
 		}
 	}
 
-	private List<Department> getDepartments(CursorPageRequestDepartment request, String sortDirection) {
-		String nameOrDescription = request.nameOrDescription();
-		Long idAfter = request.idAfter();
+	private List<Department> getDepartments(CursorPageRequestDepartment request) {
+		String sortField = request.sortField();
+		String direction = request.sortDirection();
 
-		if ("asc".equalsIgnoreCase(sortDirection)) {
-			return departmentRepository.findDepartmentAsc(request.nameOrDescription(), request.idAfter(), request.sortField());
-		} else {
-			return departmentRepository.findDepartmentDesc(request.nameOrDescription(), request.idAfter(), request.sortField());
+		if ("asc".equalsIgnoreCase(direction)) {
+			if ("establishedDate".equalsIgnoreCase(sortField)) {
+				return departmentRepository.findDepartmentDateAsc(request.nameOrDescription(), request.idAfter(),
+					request.sortField());
+			} else
+				return departmentRepository.findDepartmentNameAsc(request.nameOrDescription(), request.idAfter(),
+					request.sortField());
 		}
+		else if ("establishedDate".equalsIgnoreCase(sortField)) {
+			return departmentRepository.findDepartmentDateDesc(request.nameOrDescription(), request.idAfter(),
+				request.sortField());
+		}
+		return departmentRepository.findDepartmentNameDesc(request.nameOrDescription(), request.idAfter(),
+			request.sortField());
+
 	}
 
 	private CursorPageResponseDepartmentDto toCursorPageResponse(List<DepartmentDto> dtos, CursorPageRequestDepartment request) {
@@ -138,7 +148,7 @@ public class DepartmentServiceImpl implements DepartmentServiceInterface {
 
 			// 다음 페이지의 데이터가 있는지 확인
 			List<Department> nextDepartment = getDepartments(
-				CursorPageRequestDepartment.copy(request, nextIdAfter, nextCursor), request.sortDirection());
+				CursorPageRequestDepartment.copy(request, nextIdAfter, nextCursor));
 			hasNext = !nextDepartment.isEmpty();
 		}
 
