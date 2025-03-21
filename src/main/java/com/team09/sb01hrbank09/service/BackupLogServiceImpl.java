@@ -49,6 +49,11 @@ public class BackupLogServiceImpl implements BackupLogServiceInterface {
 	@Transactional
 	public BackupDto createBackup(String worker) {
 
+		boolean isBackupInProgress = backupRepository.existsByStatus(BackupStatus.IN_PROGRESS);
+		if (isBackupInProgress) {
+			throw new RuntimeException("이미 백업이 진행 중입니다");
+		}
+
 		Backup backup = Backup.createBackup(worker);
 
 		Instant lastEmployeeUpdate = employeeService.getUpdateTime();
