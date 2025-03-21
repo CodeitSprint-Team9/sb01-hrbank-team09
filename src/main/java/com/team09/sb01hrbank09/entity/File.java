@@ -72,7 +72,7 @@ public class File {
 
 	public static File createCsvFile(String filename, Long size, Path path) {
 		String convertPath = path.toString();
-		return new File(filename, "csv", size, convertPath + ".csv");
+		return new File(filename, "csv", size, convertPath);
 	}
 
 	public static File createErrorFile(String filename, Long size, Path path) {
