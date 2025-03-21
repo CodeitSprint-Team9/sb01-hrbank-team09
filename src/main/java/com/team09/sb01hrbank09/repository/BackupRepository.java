@@ -22,7 +22,7 @@ public interface BackupRepository extends JpaRepository<Backup, Long> {
 
 	@Query(value = """
 		SELECT b FROM Backup b
-		WHERE (:worker IS NULL OR b.worker LIKE %:worker%)
+		WHERE (b.worker LIKE %:worker%)
 				AND (:status IS NULL OR b.status = :status)
 				AND (b.startedAt >= :startedAtFrom)
 				AND (b.startedAt <= :startedAtTo)
@@ -39,7 +39,7 @@ public interface BackupRepository extends JpaRepository<Backup, Long> {
 
 	@Query(value = """
 		SELECT b FROM Backup b
-		WHERE (:worker IS NULL OR b.worker LIKE %:worker%)
+		WHERE (b.worker LIKE %:worker%)
 				AND (:status IS NULL OR b.status = :status)
 				AND (b.startedAt >= :startedAtFrom)
 				AND (b.startedAt <= :startedAtTo)
@@ -56,7 +56,7 @@ public interface BackupRepository extends JpaRepository<Backup, Long> {
 
 	@Query(value = """
 		SELECT COUNT(b.id) FROM Backup b
-		WHERE (:worker IS NULL OR b.worker LIKE %:worker%)
+		WHERE (b.worker LIKE %:worker%)
 				AND (:status IS NULL OR b.status = :status)
 				AND (b.startedAt >= :startedAtFrom)
 				AND (b.startedAt <= :startedAtTo)
