@@ -45,9 +45,13 @@ public class DepartmentController {
 		@RequestParam(defaultValue = "10") int size,
 		@RequestParam(defaultValue = "name") String sortField,
 		@RequestParam(defaultValue = "asc") String sortDirection) {
+		if (nameOrDescription == null) {
+			nameOrDescription = "";
+		}
 		CursorPageRequestDepartment request = new CursorPageRequestDepartment(
 			nameOrDescription, idAfter, cursor, size, sortField, sortDirection
 		);
+
 		CursorPageResponseDepartmentDto response = departmentService.findDepartmentList(request);
 
 		return ResponseEntity.ok(response);
