@@ -3,6 +3,7 @@ package com.team09.sb01hrbank09.service;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -67,7 +68,6 @@ public class DepartmentServiceImpl implements DepartmentServiceInterface {
 		if (department.getEmployeeCount() > 0) {
 			throw new IllegalStateException("소속된 직원이 있는 부서는 삭제할 수 없습니다.");
 		}
-
 		departmentRepository.deleteById(id);
 	}
 
@@ -80,16 +80,19 @@ public class DepartmentServiceImpl implements DepartmentServiceInterface {
 		String sortField = request.sortField();
 		String sortDirection = request.sortDirection();
 
-		Sort sort = Sort.by(Sort.Direction.fromString(request.sortDirection()), request.sortField());
-		Pageable pageable = PageRequest.of(0, request.size(), sort);
-		List<Department> departments = getDepartments(request);
+		Sort.Order sortOrder =
+			sortDirection.equalsIgnoreCase("desc") ? Sort.Order.desc(sortField) : Sort.Order.asc(sortField);
+		Sort sort = Sort.by(sortOrder);
+		Pageable pageable = PageRequest.of(request.cursor() != null ? Integer.parseInt(request.cursor()) : 0,
+			request.size(), sort);
+		Page<Department> departments = departmentRepository.findDepartment(request.nameOrDescription(),
+			request.idAfter(), pageable);
 
-		//Page<Department> departmentsPage = getDepartments(request, sortDirection);
-		List<DepartmentDto> departmentDtos = departments.stream()
+		List<DepartmentDto> departmentDtos = departments.getContent().stream()
 			.map(departmentMapper::departmentToDto)
 			.toList();
 
-		return toCursorPageResponse(departmentDtos, request);
+		return toCursorPageResponse(departmentDtos, request, departments);
 	}
 
 	private void validateRequest(CursorPageRequestDepartment request) {
@@ -103,59 +106,25 @@ public class DepartmentServiceImpl implements DepartmentServiceInterface {
 		}
 	}
 
-
-	private List<Department> getDepartments(CursorPageRequestDepartment request) {
-		String sortField = request.sortField();
-		String direction = request.sortDirection();
-
-		if ("asc".equalsIgnoreCase(direction)) {
-			if ("establishedDate".equalsIgnoreCase(sortField)) {
-				return departmentRepository.findDepartmentDateAsc(request.nameOrDescription(), request.idAfter(),
-					request.sortField());
-			} else
-				return departmentRepository.findDepartmentNameAsc(request.nameOrDescription(), request.idAfter(),
-					request.sortField());
-
-		}
-		else if ("establishedDate".equalsIgnoreCase(sortField)) {
-			return departmentRepository.findDepartmentDateDesc(request.nameOrDescription(), request.idAfter(),
-				request.sortField());
-		}
-		return departmentRepository.findDepartmentNameDesc(request.nameOrDescription(), request.idAfter(),
-			request.sortField());
-
-	}
-
 	private CursorPageResponseDepartmentDto toCursorPageResponse(List<DepartmentDto> dtos,
-		CursorPageRequestDepartment request) {
+		CursorPageRequestDepartment request, Page<Department> departments) {
 		Long nextIdAfter = null;
 		String nextCursor = null;
-		boolean hasNext = false;
+		boolean hasNext = departments.hasNext();
 
-		if (!dtos.isEmpty()) {
-			nextIdAfter = dtos.get(dtos.size() - 1).id();
-			nextCursor = String.valueOf(nextIdAfter);
-
-			// 다음 페이지의 데이터가 있는지 확인
-			List<Department> nextDepartment = getDepartments(
-				CursorPageRequestDepartment.copy(request, nextIdAfter, nextCursor));
-			hasNext = !nextDepartment.isEmpty();
+		if (hasNext) {
+			nextCursor = String.valueOf(departments.getNumber() + 1);
+			nextIdAfter = departments.getContent().get(departments.getContent().size() - 1).getId();
 		}
 
-		// if (departmentsPage.hasNext()) {
-		// 	Pageable nextPageable = departmentsPage.nextPageable();
-		// 	Page<Department> nextDepartmentsPage = getDepartments(CursorPageRequestDepartment.copy(request, nextIdAfter, nextCursor), nextPageable);
-		// 	hasNext = !nextDepartmentsPage.getContent().isEmpty();
-		// }
-
-		long totalCount = departmentRepository.getTotalElements(request.nameOrDescription());
+		Long totalElements = departments.getTotalElements();
 
 		return new CursorPageResponseDepartmentDto(
 			dtos,
 			nextCursor,
 			nextIdAfter,
 			request.size(),
-			totalCount,
+			totalElements,
 			hasNext
 		);
 	}
