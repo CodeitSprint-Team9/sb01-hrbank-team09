@@ -67,4 +67,6 @@ public interface BackupRepository extends JpaRepository<Backup, Long> {
 		@Param("startedAtFrom") Instant startedAtFrom,
 		@Param("startedAtTo") Instant startedAtTo
 	);
+
+	boolean existsByStatus(BackupStatus status);
 }
