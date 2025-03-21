@@ -132,10 +132,20 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 		Sort sort = Sort.by(direction, sortField);
 
 		Pageable pageable = PageRequest.of(0, size + 1, sort);
+		Long cursorLong = null;
+		if (cursor instanceof Long) {
+			cursorLong = (Long) cursor;
+		} else if (cursor instanceof String) {
+			try {
+				cursorLong = Long.valueOf((String) cursor);
+			} catch (NumberFormatException e) {
+				cursorLong = null;
+			}
+		}
 
 		List<Employee> employees = employeeRepository.findEmployeesWithAdvancedFilters(
 			nameOrEmail, employeeNumber, departmentName, position, hireDateFrom,
-			hireDateTo, status, idAfter, (Long)cursor, pageable);
+			hireDateTo, status, idAfter, cursorLong, pageable);
 		boolean hasNext = false;
 		if (employees.size() > size) {
 			hasNext = true;
