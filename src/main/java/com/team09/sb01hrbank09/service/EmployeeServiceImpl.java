@@ -4,18 +4,15 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.Year;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -30,11 +27,9 @@ import org.springframework.web.multipart.MultipartFile;
 import com.team09.sb01hrbank09.dto.entityDto.EmployeeDistributionDto;
 import com.team09.sb01hrbank09.dto.entityDto.EmployeeDto;
 import com.team09.sb01hrbank09.dto.entityDto.EmployeeTrendDto;
-import com.team09.sb01hrbank09.dto.request.CursorPageRequestBackupDto;
 import com.team09.sb01hrbank09.dto.request.EmployeeCreateRequest;
 import com.team09.sb01hrbank09.dto.request.EmployeeUpdateRequest;
 import com.team09.sb01hrbank09.dto.response.CursorPageResponseEmployeeDto;
-import com.team09.sb01hrbank09.entity.Backup;
 import com.team09.sb01hrbank09.entity.Department;
 import com.team09.sb01hrbank09.entity.Employee;
 import com.team09.sb01hrbank09.entity.Enum.ChangeLogType;
@@ -373,5 +368,11 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 				hireDateFrom, hireDateTo, status, cursorHireDate, cursorId, pageable
 			);
 		}
+	}
+
+	@Transactional(readOnly = true)
+	@Override
+	public Stream<EmployeeDto> getEmployeeStream() {
+		return employeeRepository.findAllEmployeesStream();
 	}
 }
