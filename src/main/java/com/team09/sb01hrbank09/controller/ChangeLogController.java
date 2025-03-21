@@ -40,7 +40,10 @@ public class ChangeLogController {
 		@RequestParam(defaultValue = "10") int size,
 		@RequestParam(defaultValue = "at") String sortField,
 		@RequestParam(defaultValue = "desc") String sortDirection) {
-		
+
+		atFrom = atFrom != null ? atFrom : Instant.parse("1970-01-01T00:00:00Z");
+		atTo = atTo != null ? atTo : Instant.parse("9999-12-31T23:59:59Z");
+
 		CursorPageRequestChangeLog request = new CursorPageRequestChangeLog(employeeNumber, type, memo,
 			ipAddress, atFrom, atTo, idAfter, cursor, size, sortField, sortDirection);
 
