@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.team09.sb01hrbank09.api.BackupApi;
 import com.team09.sb01hrbank09.dto.entityDto.BackupDto;
 import com.team09.sb01hrbank09.dto.request.CursorPageRequestBackupDto;
 import com.team09.sb01hrbank09.dto.response.CursorPageResponseBackupDto;
@@ -22,7 +23,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/backups")
-public class BackupContoller {
+public class BackupContoller implements BackupApi {
 	private final BackupLogServiceInterface backupLogServiceInterface;
 	private final BackupMapper backupMapper;
 
