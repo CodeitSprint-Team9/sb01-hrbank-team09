@@ -23,57 +23,57 @@ public interface ChangeLogRepository extends JpaRepository<ChangeLog, Long> {
 
 	void deleteById(Long id);
 
+	//오래된순
 	@Query("SELECT c FROM ChangeLog c WHERE " +
-		"(:employeeNumber IS NULL OR c.employeeNumber LIKE %:employeeNumber%) AND " +
-		"(:memo IS NULL OR c.memo LIKE %:memo%) AND " +
-		"(:ipAddress IS NULL OR c.ipAddress LIKE %:ipAddress%) AND " +
+		"(c.employeeNumber LIKE %:employeeNumber%) AND " +
+		"(c.memo LIKE %:memo%) AND " +
+		"(c.ipAddress LIKE %:ipAddress%) AND " +
 		"(:type IS NULL OR c.type = :type) AND " +
 		"(c.at >= :atFrom) AND " +
 		"(c.at <= :atTo) AND " +
-		"(:idAfter IS NULL OR c.id > :idAfter) " +
-		"ORDER BY c.at ASC")
+		"(c.id > :idAfter) "
+	)
 	Page<ChangeLog> findChangeLogsAsc(String employeeNumber, String memo, String ipAddress, ChangeLogType type,
-		Instant atFrom,
-		Instant atTo, Long idAfter, Pageable pageable);
+		Instant atFrom, Instant atTo, Long idAfter, Pageable pageable);
 
+	//최신순
 	@Query("SELECT c FROM ChangeLog c WHERE " +
-		"(:employeeNumber IS NULL OR c.employeeNumber LIKE %:employeeNumber%) AND " +
-		"(:memo IS NULL OR c.memo LIKE %:memo%) AND " +
-		"(:ipAddress IS NULL OR c.ipAddress LIKE %:ipAddress%) AND " +
+		"(c.employeeNumber LIKE %:employeeNumber%) AND " +
+		"(c.memo LIKE %:memo%) AND " +
+		"(c.ipAddress LIKE %:ipAddress%) AND " +
 		"(:type IS NULL OR c.type = :type) AND " +
 		"(c.at >= :atFrom) AND " +
 		"(c.at <= :atTo) AND " +
-		"(:idAfter IS NULL OR c.id > :idAfter) ")
+		"(c.id < :idAfter)"
+	)
 	Page<ChangeLog> findChangeLogsDesc(String employeeNumber, String memo, String ipAddress, ChangeLogType type,
 		Instant atFrom, Instant atTo, Long idAfter, Pageable pageable);
 
 	@Query("SELECT c FROM ChangeLog c WHERE " +
-		"(:employeeNumber IS NULL OR c.employeeNumber LIKE %:employeeNumber%) AND " +
-		"(:memo IS NULL OR c.memo LIKE %:memo%) AND " +
-		"(:ipAddress IS NULL OR c.ipAddress LIKE %:ipAddress%) AND " +
+		"(c.employeeNumber LIKE %:employeeNumber%) AND " +
+		"(c.memo LIKE %:memo%) AND " +
+		"(c.ipAddress LIKE %:ipAddress%) AND " +
 		"(:type IS NULL OR c.type = :type) AND " +
 		"(c.at >= :atFrom) AND " +
 		"(c.at <= :atTo) ")
 	Page<ChangeLog> findChangeLogsWithoutIdAfterDesc(String employeeNumber, String memo, String ipAddress,
-		ChangeLogType type, Instant atFrom, Instant atTo,
-		Pageable pageable);
+		ChangeLogType type, Instant atFrom, Instant atTo, Pageable pageable);
 
 	@Query("SELECT c FROM ChangeLog c WHERE " +
-		"(:employeeNumber IS NULL OR c.employeeNumber LIKE %:employeeNumber%) AND " +
-		"(:memo IS NULL OR c.memo LIKE %:memo%) AND " +
-		"(:ipAddress IS NULL OR c.ipAddress LIKE %:ipAddress%) AND " +
+		"(c.employeeNumber LIKE %:employeeNumber%) AND " +
+		"(c.memo LIKE %:memo%) AND " +
+		"(c.ipAddress LIKE %:ipAddress%) AND " +
 		"(:type IS NULL OR c.type = :type) AND " +
 		"(c.at >= :atFrom) AND " +
-		"(c.at <= :atTo) " +
-		"ORDER BY c.at ASC")
+		"(c.at <= :atTo) ")
 	Page<ChangeLog> findChangeLogsWithoutIdAfterAsc(String employeeNumber, String memo, String ipAddress,
 		ChangeLogType type, Instant atFrom, Instant atTo,
 		Pageable pageable);
 
 	@Query("SELECT COUNT(c) FROM ChangeLog c WHERE " +
-		"(:employeeNumber IS NULL OR c.employeeNumber LIKE %?1%) AND " +
-		"(:memo IS NULL OR c.memo LIKE %?2%) AND " +
-		"(:ipAddress IS NULL OR c.ipAddress LIKE %?3%) AND " +
+		"(c.employeeNumber LIKE %?1%) AND " +
+		"(c.memo LIKE %?2%) AND " +
+		"(c.ipAddress LIKE %?3%) AND " +
 		"(:type IS NULL OR c.type = ?4) AND " +
 		"(c.at >= ?5) AND " +
 		"(c.at <= ?6)")

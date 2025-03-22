@@ -15,19 +15,20 @@ public record CursorPageRequestChangeLog(
 	String sortField,
 	String sortDirection
 ) {
-	public static CursorPageRequestChangeLog copy(CursorPageRequestChangeLog dto, Long nextIdAfter, String nextCursor) {
+	public static CursorPageRequestChangeLog copy(CursorPageRequestChangeLog request, String newCursor,
+		Long newIdAfter) {
 		return new CursorPageRequestChangeLog(
-			dto.employeeNumber(),
-			dto.type(),
-			dto.memo(),
-			dto.ipAddress(),
-			dto.atFrom(),
-			dto.atTo(),
-			nextIdAfter,  // nextIdAfter 값 설정
-			nextCursor,   // nextCursor 값 설정
-			dto.size(),
-			dto.sortField(),
-			dto.sortDirection()
+			request.employeeNumber(),
+			request.type(),
+			request.memo(),
+			request.ipAddress(),
+			request.atFrom(),
+			request.atTo(),
+			newIdAfter != null ? newIdAfter : request.idAfter(),
+			newCursor,
+			request.size(),
+			request.sortField(),
+			request.sortDirection()
 		);
 	}
 }
