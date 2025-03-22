@@ -6,6 +6,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,6 +16,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import com.team09.sb01hrbank09.dto.entityDto.EmployeeDto;
 import com.team09.sb01hrbank09.entity.Employee;
 import com.team09.sb01hrbank09.entity.Enum.EmployeeStatus;
 
@@ -134,6 +136,10 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 		@Param("cursor") Long cursor,
 		Pageable pageable);
 
-
+	@Query("SELECT new com.team09.sb01hrbank09.dto.entityDto.EmployeeDto(" +
+		"e.id, e.name, e.email, e.employeeNumber, e.department.id, " +
+		"e.department.name, e.position, e.hireDate, CAST(e.status AS string), e.file.id) " +
+		"FROM Employee e")
+	Stream<EmployeeDto> findAllEmployeesStream();
 
 }

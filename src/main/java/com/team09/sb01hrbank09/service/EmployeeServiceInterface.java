@@ -4,7 +4,10 @@ import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Stream;
 
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.team09.sb01hrbank09.dto.entityDto.EmployeeDistributionDto;
@@ -44,4 +47,7 @@ public interface EmployeeServiceInterface {
 	Long countEmployee(String status, LocalDate startedAt, LocalDate endedAt);
 
 	Instant getUpdateTime();
+
+	@Transactional(readOnly = true)
+	Stream<EmployeeDto> getEmployeeStream();
 }
