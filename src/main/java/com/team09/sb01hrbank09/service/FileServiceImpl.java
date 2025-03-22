@@ -4,14 +4,13 @@ import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
-import java.util.Base64;
-import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
@@ -56,47 +55,48 @@ public class FileServiceImpl implements FileServiceInterface {
 	@Override
 	@Transactional
 	public File createCsvBackupFile() throws IOException {
-		List<EmployeeDto> data = employeeServiceInterface.getEmployeeAllList();
-
 		String directoryPath = System.getProperty("user.dir") + "/files/csv";
 		Files.createDirectories(Paths.get(directoryPath));
 
 		String fileName = "employee_backup_" + Instant.now().toEpochMilli() + ".csv";
 		Path filePath = Paths.get(directoryPath, fileName);
 
-
 		try (BufferedWriter writer = Files.newBufferedWriter(filePath);
 			 CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT
 				 .withHeader("ID", "EmployeeNumber", "Name", "Email", "DepartmentName",
-					 "Position", "HireDate", "Status"))) {
+					 "Position", "HireDate", "Status"));
+			 Stream<EmployeeDto> employeeStream = employeeServiceInterface.getEmployeeStream()) {
 
-			int batchSize = 10000;//5000?
-			int count = 0;
+			int batchSize = 5000;
+			AtomicInteger count = new AtomicInteger();
 
-			for (EmployeeDto employee : data) {
+			employeeStream.forEach(employee -> {
+				try {
+					csvPrinter.printRecord(
+						employee.id(),
+						employee.employeeNumber(),
+						employee.name(),
+						employee.email(),
+						employee.departmentName(),
+						employee.position(),
+						employee.hireDate(),
+						employee.status()
+					);
 
-				csvPrinter.printRecord(
-					employee.id(),
-					employee.employeeNumber(),
-					employee.name(),
-					employee.email(),
-					employee.departmentName(),
-					employee.position(),
-					employee.hireDate(),
-					employee.status()
-				);
-
-				count++;
-
-				if (count % batchSize == 0) {
-					csvPrinter.flush();
+					if (count.incrementAndGet() % batchSize == 0) {
+						csvPrinter.flush();
+					}
+				} catch (IOException e) {
+					throw new RuntimeException("CSV writing error", e);
 				}
-			}
+			});
 
 			csvPrinter.flush();
-			if (!Files.exists(filePath)) { // 파일이 존재하지 않는다면 예외 발생
+
+			if (!Files.exists(filePath)) {
 				throw new IOException("CSV file was not created at: " + filePath);
 			}
+
 			File fileEntity = File.createCsvFile(fileName, Files.size(filePath), filePath);
 			fileRepository.save(fileEntity);
 
@@ -110,7 +110,6 @@ public class FileServiceImpl implements FileServiceInterface {
 			fileRepository.save(errorFile);
 			return errorFile;
 		}
-
 	}
 
 	@Override

@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.team09.sb01hrbank09.api.DepartmentApi;
 import com.team09.sb01hrbank09.dto.entityDto.DepartmentDto;
 import com.team09.sb01hrbank09.dto.request.CursorPageRequestDepartment;
 import com.team09.sb01hrbank09.dto.request.DepartmentCreateRequest;
@@ -23,7 +24,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/departments")
 @RequiredArgsConstructor
-public class DepartmentController {
+public class DepartmentController implements DepartmentApi {
 
 	//구현체로 변경 예정
 	private final DepartmentServiceInterface departmentService;

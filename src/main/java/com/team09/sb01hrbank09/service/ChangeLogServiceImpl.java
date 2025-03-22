@@ -289,23 +289,28 @@ public class ChangeLogServiceImpl implements ChangeLogServiceInterface {
 		return diffs;
 	}
 
+	private static final Set<String> IGNORED_FIELDS = Set.of("id", "departmentId", "profileImageId");
+
 	private List<DiffDto> compareDiffs(String beforeJson, String afterJson) {
 		List<DiffDto> diffs = new ArrayList<>();
 		ObjectMapper objectMapper = new ObjectMapper();
 
 		try {
-			// beforeJson 또는 afterJson이 빈 객체로 저장되었으므로, null일 경우 빈 객체로 취급
 			Map<String, Object> beforeMap = (beforeJson != null && !beforeJson.isEmpty())
 				? objectMapper.readValue(beforeJson, Map.class) : new HashMap<>();
 			Map<String, Object> afterMap = (afterJson != null && !afterJson.isEmpty())
 				? objectMapper.readValue(afterJson, Map.class) : new HashMap<>();
 
-			// 모든 키를 비교
 			Set<String> allKeys = new HashSet<>();
 			allKeys.addAll(beforeMap.keySet());
 			allKeys.addAll(afterMap.keySet());
 
 			for (String key : allKeys) {
+				// 특정 필드는 비교 제외
+				if (IGNORED_FIELDS.contains(key)) {
+					continue;
+				}
+
 				Object beforeValue = beforeMap.get(key);
 				Object afterValue = afterMap.get(key);
 
@@ -314,7 +319,7 @@ public class ChangeLogServiceImpl implements ChangeLogServiceInterface {
 
 				if (!Objects.equals(beforeValue, afterValue)) {
 					diffs.add(new DiffDto(
-						mappedPropertyName,  // ✅ 변환된 propertyName 사용
+						mappedPropertyName,
 						beforeValue != null ? beforeValue.toString() : null,
 						afterValue != null ? afterValue.toString() : null
 					));
@@ -324,7 +329,6 @@ public class ChangeLogServiceImpl implements ChangeLogServiceInterface {
 			throw new RuntimeException("JSON parsing error", e);
 		}
 
-		//변경된 부분이 없다면 빈 객체 반환 []
 		if (diffs.isEmpty()) {
 			log.info("변경된 부분이 없습니다.");
 		}
