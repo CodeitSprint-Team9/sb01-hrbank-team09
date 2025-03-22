@@ -25,6 +25,7 @@ import com.team09.sb01hrbank09.dto.entityDto.EmployeeTrendDto;
 import com.team09.sb01hrbank09.dto.request.EmployeeCreateRequest;
 import com.team09.sb01hrbank09.dto.request.EmployeeUpdateRequest;
 import com.team09.sb01hrbank09.dto.response.CursorPageResponseEmployeeDto;
+import com.team09.sb01hrbank09.entity.Enum.EmployeeStatus;
 import com.team09.sb01hrbank09.service.EmployeeServiceInterface;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -60,7 +61,7 @@ public class EmployeeController implements EmployeeApi {
 		@RequestParam(required = false) String position,
 		@RequestParam(required = false) LocalDate hireDateFrom,
 		@RequestParam(required = false) LocalDate hireDateTo,
-		@RequestParam(required = false) String status,
+		@RequestParam(required = false) EmployeeStatus status,
 		@RequestParam(required = false) Long idAfter,
 		@RequestParam(required = false) String cursor,
 		@RequestParam(defaultValue = "10") int size,
@@ -75,6 +76,8 @@ public class EmployeeController implements EmployeeApi {
 		if (hireDateTo != null) {
 			parsedHireDateTo = LocalDate.parse("9999-12-31");
 		}
+
+		nameOrEmail = nameOrEmail != null ? nameOrEmail : "";
 
 		// status 필드 검증
 		//List<String> validStatuses = Arrays.asList("ACTIVE", "ON_LEAVE", "RESIGNED");

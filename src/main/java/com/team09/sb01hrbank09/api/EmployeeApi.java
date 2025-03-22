@@ -13,6 +13,7 @@ import com.team09.sb01hrbank09.dto.entityDto.EmployeeTrendDto;
 import com.team09.sb01hrbank09.dto.request.EmployeeCreateRequest;
 import com.team09.sb01hrbank09.dto.request.EmployeeUpdateRequest;
 import com.team09.sb01hrbank09.dto.response.CursorPageResponseEmployeeDto;
+import com.team09.sb01hrbank09.entity.Enum.EmployeeStatus;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -33,7 +34,7 @@ public interface EmployeeApi {
 
 	@Operation(summary = "직원 목록 조회", description = "직원 목록을 조회합니다.")
 	ResponseEntity<CursorPageResponseEmployeeDto> findEmployeeList(String nameOrEmail, String employeeNumber,
-		String departmentName, String position, LocalDate hireDateFrom, LocalDate hireDateTo, String status,
+		String departmentName, String position, LocalDate hireDateFrom, LocalDate hireDateTo, EmployeeStatus status,
 		Long idAfter, String cursor, int size, String sortField, String sortDirection);
 
 	@Operation(summary = "직원 상세 조회", description = "특정 직원 정보를 조회합니다.")
