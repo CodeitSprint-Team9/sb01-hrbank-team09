@@ -321,7 +321,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 			String positionName = (String)row[0];
 			Long totalEmployees = (Long)row[1];
 			Long activeEmployees = (Long)row[2];
-			double ratio = (activeEmployees == 0) ? 0.0 : ((double)totalEmployees * 100 / activeEmployees);
+			double ratio = (activeEmployees == 0) ? 0.0 : (((double)activeEmployees * 100) / totalEmployees);
 			distribution.add(new EmployeeDistributionDto(positionName, totalEmployees,
 				ratio));
 		}
@@ -336,7 +336,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 			Long departmentId = (Long)row[0];
 			Long totalEmployees = (Long)row[1];
 			Long activeEmployees = (Long)row[2];
-			double ratio = (activeEmployees == 0) ? 0.0 : ((double)totalEmployees * 100 / activeEmployees);
+			double ratio = (activeEmployees == 0) ? 0.0 : (((double)activeEmployees * 100) / totalEmployees);
 			String departmentName = departmentServiceInterface.findDepartmentById(departmentId).name();
 			distribution.add(new EmployeeDistributionDto(departmentName, totalEmployees,
 				ratio));
