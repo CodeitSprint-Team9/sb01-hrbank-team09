@@ -29,8 +29,8 @@ public interface ChangeLogApi {
 		@Parameter(description = "IP 주소") String ipAddress,
 		@Parameter(description = "조회 시작 시간") Instant atFrom,
 		@Parameter(description = "조회 종료 시간") Instant atTo,
-		@Parameter(description = "이후 ID") Long idAfter,
 		@Parameter(description = "커서") String cursor,
+		@Parameter(description = "이후 ID") Long idAfter,
 		@Parameter(description = "페이지 크기") int size,
 		@Parameter(description = "정렬 필드") String sortField,
 		@Parameter(description = "정렬 방향") String sortDirection
