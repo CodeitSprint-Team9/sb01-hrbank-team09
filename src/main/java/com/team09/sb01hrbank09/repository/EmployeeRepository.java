@@ -214,4 +214,14 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 		String position,
 		EmployeeStatus status
 	);
+
+	@Query("SELECT COUNT(e) FROM Employee e " +
+		"WHERE (:status IS NULL OR e.status = :status) " +
+		"AND ( e.hireDate >= :fromDate) " +
+		"AND ( e.hireDate <= :toDate)")
+	int countEmployees(
+		@Param("status") EmployeeStatus status,
+		@Param("fromDate") LocalDate fromDate,
+		@Param("toDate") LocalDate toDate
+	);
 }
