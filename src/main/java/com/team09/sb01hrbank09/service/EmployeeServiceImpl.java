@@ -135,6 +135,7 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 
 		Long totalElements = employeeRepository.getCount(
 			nameOrEmail,
+			departmentName,
 			position,
 			status
 		);

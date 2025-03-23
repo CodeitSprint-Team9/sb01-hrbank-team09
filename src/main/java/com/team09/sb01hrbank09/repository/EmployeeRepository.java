@@ -205,12 +205,15 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 
 	@Query("""
 		SELECT COUNT(e) FROM Employee e
-				WHERE (e.name LIKE %:nameOrEmail% OR e.email LIKE %:nameOrEmail%)
-						AND (e.position LIKE %:position%)
-						AND (:status IS NULL OR e.status = :status)
+		JOIN e.department d
+		WHERE (e.name LIKE %:nameOrEmail% OR e.email LIKE %:nameOrEmail%)
+				AND (d.name LIKE %:departmentName%)
+				AND (e.position LIKE %:position%)
+				AND (:status IS NULL OR e.status = :status)
 		""")
 	Long getCount(
 		String nameOrEmail,
+		String departmentName,
 		String position,
 		EmployeeStatus status
 	);
