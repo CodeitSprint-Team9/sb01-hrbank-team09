@@ -1,11 +1,11 @@
 package com.team09.sb01hrbank09.dto.entityDto;
 
-import java.time.Instant;
+import java.time.LocalDate;
 
 public record EmployeeTrendDto(
-	Instant date,
-	Long count,
-	Long change,
+	LocalDate date,
+	int count,
+	int change,
 	Double changeRate
 ) {
 }

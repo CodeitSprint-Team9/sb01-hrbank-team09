@@ -1,11 +1,9 @@
 package com.team09.sb01hrbank09.service;
 
 import java.io.IOException;
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.Year;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -87,8 +85,6 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 			employeeNumber, employeeCreateRequest.position(),
 			employeeCreateRequest.hireDate(), EmployeeStatus.ACTIVE, file, usingDepartment);
 
-		//EmployeeDto newEmployee=employeeMapper.employeeToDto(employee);
-		//만들어지면 넣기
 		String memo;
 		if (employeeCreateRequest.memo() == null) {
 			memo = "신규 직원 등록";
@@ -316,29 +312,63 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 	@Transactional(readOnly = true)
 	public List<EmployeeTrendDto> getEmployeeTrend(LocalDate startedAt, LocalDate endedAt, String gap) {
 
-		List<Object[]> results = employeeRepository.findEmployeeTrend(startedAt, endedAt, gap);
-		List<EmployeeTrendDto> trendList = new ArrayList<>();
-		Long previousCount = null;
+		List<EmployeeTrendDto> list = new ArrayList<>();
+		LocalDate fromDate = LocalDate.of(1970, 1, 1); //POSIX 시간
 
-		for (Object[] result : results) {
-			Instant periodDate;
+		int beforeCount = employeeRepository.countEmployees(EmployeeStatus.ACTIVE, fromDate,
+			startedAt);
 
-			if (result[0] instanceof Timestamp) {
-				periodDate = ((Timestamp)result[0]).toInstant();
-			} else if (result[0] instanceof LocalDate) {
-				periodDate = ((LocalDate)result[0]).atStartOfDay(ZoneOffset.UTC).toInstant();
-			} else {
-				periodDate = (Instant)result[0];
+		list.add(new EmployeeTrendDto(startedAt, beforeCount, 0, 0.0));
+
+		while (!startedAt.isAfter(endedAt)) {
+			LocalDate nextFrom;
+
+			switch (gap) {
+				case "day":
+					nextFrom = startedAt.plusDays(1);
+					break;
+				case "week":
+					nextFrom = startedAt.plusWeeks(1);
+					break;
+				case "quarter":
+					nextFrom = startedAt.plusMonths(3);
+					break;
+				case "year":
+					nextFrom = startedAt.plusYears(1);
+					break;
+				case "month":
+				default:
+					nextFrom = startedAt.plusMonths(1);
+					break;
 			}
 
-			Long count = ((Number)result[1]).longValue();
-			Long change = (previousCount == null) ? 0L : count - previousCount;
-			Double changeRate = (previousCount == null || previousCount == 0L) ? 0.0 : (double)change / previousCount;
+			Integer activeCount = employeeRepository.countEmployees(EmployeeStatus.ACTIVE,
+				fromDate, nextFrom);
+			Integer onLeaveCount = employeeRepository.countEmployees(EmployeeStatus.ON_LEAVE,
+				fromDate, nextFrom);
 
-			trendList.add(new EmployeeTrendDto(periodDate, count, change, changeRate));
-			previousCount = count;
+			int count =
+				(activeCount != null ? activeCount : 0) + (onLeaveCount != null ? onLeaveCount : 0);
+			int change = count - beforeCount;
+			double percentage = calculatePercentage(count, change, beforeCount);
+
+			percentage = Math.floor(percentage * 10) / 10;
+
+			list.add(new EmployeeTrendDto(nextFrom, Math.abs(count), change, percentage));
+
+			beforeCount = count;
+			startedAt = nextFrom;
 		}
-		return trendList;
+		list.remove(list.size() - 1);
+
+		return list;
+	}
+
+	private double calculatePercentage(int count, int change, int beforeCount) {
+		if (beforeCount == 0) {
+			return count > 0 ? 100.0 : 0.0;
+		}
+		return ((double)change / beforeCount) * 100.0;
 	}
 
 	@Override
