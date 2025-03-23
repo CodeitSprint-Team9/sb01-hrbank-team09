@@ -16,7 +16,6 @@ import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -121,96 +120,100 @@ public class EmployeeServiceImpl implements EmployeeServiceInterface {
 	public CursorPageResponseEmployeeDto findEmployeeList(
 		String nameOrEmail, String employeeNumber, String departmentName, String position,
 		LocalDate hireDateFrom, LocalDate hireDateTo, EmployeeStatus status, Long idAfter,
-		Object cursor, int size, String sortField, String sortDirection) {
+		String cursor, int size, String sortField, String sortDirection) {
 
 		Sort.Direction direction = "desc".equalsIgnoreCase(sortDirection) ? Sort.Direction.DESC : Sort.Direction.ASC;
 		Sort sort = Sort.by(direction, sortField);
 
 		Pageable pageable = PageRequest.of(0, size + 1, sort);
 
-		LocalDate cursorLocalDate = null;
-		String cursorString = null;
-		if (cursor instanceof String) {
-			try {
-				cursorString = (String)cursor;
-			} catch (NumberFormatException e) {
-				cursorString = null;
-			}
-		} else if (cursor instanceof LocalDate) {
-			try {
-				cursorLocalDate = (LocalDate)cursor;
-			} catch (NumberFormatException e) {
-				cursorLocalDate = (LocalDate)cursor;
+		List<Employee> employees = getEmployees(nameOrEmail,
+			employeeNumber, departmentName, position, hireDateFrom, hireDateTo, status, idAfter, cursor, sortField,
+			sortDirection, pageable);
+
+		boolean hasNext = false;
+		if (employees.size() > size) {
+			hasNext = true;
+			employees = employees.subList(0, size);
+		}
+
+		Long totalElements = employeeRepository.getCount(
+			nameOrEmail,
+			position,
+			status
+		);
+
+		Long nextIdAfter = null;
+		String nextCursor = null;
+		if (!employees.isEmpty()) {
+			Employee lastEmployee = employees.get(employees.size() - 1);
+			nextIdAfter = lastEmployee.getId();
+
+			if (sortField.equals("hireDate")) {
+				nextCursor = lastEmployee.getHireDate().toString();
+			} else if (sortField.equals("employeeNumber")) {
+				nextCursor = lastEmployee.getEmployeeNumber();
+			} else if (sortField.equals("name")) {
+				nextCursor = lastEmployee.getName();
 			}
 		}
 
-		Page<Employee> employees = null;
+		List<EmployeeDto> employeeDtos = employees.stream()
+			.map(employeeMapper::employeeToDto)
+			.collect(Collectors.toList());
+
+		return new CursorPageResponseEmployeeDto(
+			employeeDtos,
+			nextCursor,
+			nextIdAfter,
+			size,
+			totalElements,
+			hasNext
+		);
+	}
+
+	private List<Employee> getEmployees(String nameOrEmail, String employeeNumber, String departmentName,
+		String position, LocalDate hireDateFrom, LocalDate hireDateTo, EmployeeStatus status, Long idAfter,
+		String cursor, String sortField, String sortDirection, Pageable pageable) {
+		List<Employee> employees = null;
 
 		if (sortField.equals("hireDate")) {
 			if ("desc".equalsIgnoreCase(sortDirection)) {
 				employees = employeeRepository.findEmployeesWithHireDateDesc(
 					nameOrEmail, employeeNumber, departmentName, position, hireDateFrom,
-					hireDateTo, status, cursorLocalDate, idAfter, pageable);
+					hireDateTo, status, LocalDate.parse(cursor), idAfter, pageable);
 			} else if ("asc".equalsIgnoreCase(sortDirection)) {
 				employees = employeeRepository.findEmployeesWithHireDateAsc(
 					nameOrEmail, employeeNumber, departmentName, position, hireDateFrom,
-					hireDateTo, status, cursorLocalDate, idAfter, pageable);
-
+					hireDateTo, status, LocalDate.parse(cursor), idAfter, pageable);
 			}
 		} else if (sortField.equals("employeeNumber")) {
 			if ("desc".equalsIgnoreCase(sortDirection)) {
 				employees = employeeRepository.findEmployeesWithEmployeeNumberDesc(
 					nameOrEmail, employeeNumber, departmentName, position, hireDateFrom,
-					hireDateTo, status, cursorString, idAfter, pageable
+					hireDateTo, status, cursor, idAfter, pageable
 				);
 			} else if ("asc".equalsIgnoreCase(sortDirection)) {
 				employees = employeeRepository.findEmployeesWithEmployeeNumberAsc(
 					nameOrEmail, employeeNumber, departmentName, position, hireDateFrom,
-					hireDateTo, status, cursorString, idAfter, pageable
+					hireDateTo, status, cursor, idAfter, pageable
 				);
 			}
 		} else if (sortField.equals("name")) {
 			if ("desc".equalsIgnoreCase(sortDirection)) {
 				employees = employeeRepository.findEmployeesWithNameDesc(
 					nameOrEmail, employeeNumber, departmentName, position, hireDateFrom,
-					hireDateTo, status, cursorString, idAfter, pageable
+					hireDateTo, status, cursor, idAfter, pageable
 				);
 			} else if ("asc".equalsIgnoreCase(sortDirection)) {
 				employees = employeeRepository.findEmployeesWithNameAsc(
 					nameOrEmail, employeeNumber, departmentName, position, hireDateFrom,
-					hireDateTo, status, cursorString, idAfter, pageable
+					hireDateTo, status, cursor, idAfter, pageable
 				);
 			}
 
 		}
-
-		boolean hasNext = employees.hasNext();
-		Long totalElements = employees.getTotalElements();
-
-		Employee lastEmployee = null;
-		if (!employees.getContent().isEmpty()) {
-			lastEmployee = employees.getContent().get(employees.getContent().size() - 1);
-		}
-
-		Long nextIdAfter = hasNext ? lastEmployee.getId() : null;
-		Object nextCursor = null;
-
-		if (sortField.equals("hireDate")) {
-			nextCursor = hasNext ? lastEmployee.getHireDate() : null;
-		} else if (sortField.equals("employee_number")) {
-			nextCursor = hasNext ? lastEmployee.getEmployeeNumber() : null;
-		} else if (sortField.equals("name")) {
-			nextCursor = hasNext ? lastEmployee.getName() : null;
-		}
-
-		List<EmployeeDto> employeeDtos = employees.stream()
-			.map(employeeMapper::employeeToDto)
-			.collect(Collectors.toList());
-		return new CursorPageResponseEmployeeDto(
-			employeeDtos,
-			nextCursor != null ? nextCursor.toString() : null,
-			nextIdAfter, size, totalElements, hasNext
-		);
+		return employees;
 	}
 
 	@Override

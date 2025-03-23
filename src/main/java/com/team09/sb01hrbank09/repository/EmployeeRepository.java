@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -56,17 +55,16 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 
 	@Query(value = """
 		SELECT e FROM Employee e
+		JOIN FETCH e.department d
 		WHERE (e.name LIKE %:nameOrEmail% OR e.email LIKE %:nameOrEmail%)
-		      AND (:employeeNumber IS NULL OR e.employeeNumber = :employeeNumber)
-		      AND (:departmentName IS NULL OR e.department.name = :departmentName)
-		      AND (:position IS NULL OR e.position = :position)
-		      AND ( e.hireDate >= :hireDateFrom)
-			  AND ( e.hireDate <= :hireDateTo)
-		      AND (:status IS NULL OR e.status = :status)
-		      AND ((:cursorHireDate IS NULL AND :idAfter IS NULL) OR
-		           (e.hireDate < :cursorHireDate OR (e.hireDate = :cursorHireDate AND (e.id < :idAfter OR :idAfter IS NULL))))
-		""", countQuery = "SELECT COUNT(e) FROM Employee e")
-	Page<Employee> findEmployeesWithHireDateDesc(
+				AND (d.name LIKE %:departmentName%)
+		      	AND (e.position LIKE %:position%)
+				AND (:status IS NULL OR e.status = :status)
+		    	AND (:idAfter IS NULL OR
+					      (e.hireDate < :cursorHireDate OR
+							      e.hireDate = :cursorHireDate AND e.id < :idAfter))
+		""")
+	List<Employee> findEmployeesWithHireDateDesc(
 		@Param("nameOrEmail") String nameOrEmail,
 		@Param("employeeNumber") String employeeNumber,
 		@Param("departmentName") String departmentName,
@@ -81,17 +79,16 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 
 	@Query(value = """
 		SELECT e FROM Employee e
+		JOIN FETCH e.department d
 		WHERE (e.name LIKE %:nameOrEmail% OR e.email LIKE %:nameOrEmail%)
-		      AND (:employeeNumber IS NULL OR e.employeeNumber = :employeeNumber)
-		      AND (:departmentName IS NULL OR e.department.name = :departmentName)
-		      AND (:position IS NULL OR e.position = :position)
-		      AND ( e.hireDate >= :hireDateFrom)
-		      AND ( e.hireDate <= :hireDateTo)
-		      AND (:status IS NULL OR e.status = :status)
-		      AND ((:cursorHireDate IS NULL AND :idAfter IS NULL) OR
-		           (e.hireDate > :cursorHireDate OR (e.hireDate = :cursorHireDate AND (e.id < :idAfter OR :idAfter IS NULL))))
-		""", countQuery = "SELECT COUNT(e) FROM Employee e")
-	Page<Employee> findEmployeesWithHireDateAsc(
+				AND (d.name LIKE %:departmentName%)
+		      	AND (e.position LIKE %:position%)
+				AND (:status IS NULL OR e.status = :status)
+		    	AND (:idAfter IS NULL OR
+					      (e.hireDate > :cursorHireDate OR
+							      e.hireDate = :cursorHireDate AND e.id > :idAfter))
+		""")
+	List<Employee> findEmployeesWithHireDateAsc(
 		@Param("nameOrEmail") String nameOrEmail,
 		@Param("employeeNumber") String employeeNumber,
 		@Param("departmentName") String departmentName,
@@ -106,17 +103,16 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 
 	@Query(value = """
 		SELECT e FROM Employee e
+		JOIN FETCH e.department d
 		WHERE (e.name LIKE %:nameOrEmail% OR e.email LIKE %:nameOrEmail%)
-		      AND (:employeeNumber IS NULL OR e.employeeNumber = :employeeNumber)
-		      AND (:departmentName IS NULL OR e.department.name = :departmentName)
-		      AND (:position IS NULL OR e.position = :position)
-		      AND ( e.hireDate >= :hireDateFrom)
-			  AND ( e.hireDate <= :hireDateTo)
-		      AND (:status IS NULL OR e.status = :status)
-		      AND ((:cursorEmployeeNumber IS NULL AND :idAfter IS NULL) OR
-		           (e.employeeNumber < :cursorEmployeeNumber OR (e.employeeNumber = :cursorEmployeeNumber AND (e.id < :idAfter OR :idAfter IS NULL))))
-		""", countQuery = "SELECT COUNT(e) FROM Employee e")
-	Page<Employee> findEmployeesWithEmployeeNumberDesc(
+				AND (d.name LIKE %:departmentName%)
+		      	AND (e.position LIKE %:position%)
+				AND (:status IS NULL OR e.status = :status)
+		    	AND (:idAfter IS NULL OR
+					      (e.employeeNumber < :cursorEmployeeNumber OR
+							      e.employeeNumber = :cursorEmployeeNumber AND e.id < :idAfter))
+		""")
+	List<Employee> findEmployeesWithEmployeeNumberDesc(
 		@Param("nameOrEmail") String nameOrEmail,
 		@Param("employeeNumber") String employeeNumber,
 		@Param("departmentName") String departmentName,
@@ -131,17 +127,16 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 
 	@Query(value = """
 		SELECT e FROM Employee e
+		JOIN FETCH e.department d
 		WHERE (e.name LIKE %:nameOrEmail% OR e.email LIKE %:nameOrEmail%)
-		      AND (:employeeNumber IS NULL OR e.employeeNumber = :employeeNumber)
-		      AND (:departmentName IS NULL OR e.department.name = :departmentName)
-		      AND (:position IS NULL OR e.position = :position)
-		      AND ( e.hireDate >= :hireDateFrom)
-		      AND ( e.hireDate <= :hireDateTo)
-		      AND (:status IS NULL OR e.status = :status)
-		      AND ((:cursorEmployeeNumber IS NULL AND :idAfter IS NULL) OR
-		           (e.employeeNumber > :cursorEmployeeNumber OR (e.employeeNumber = :cursorEmployeeNumber AND (e.id < :idAfter OR :idAfter IS NULL))))
-		""", countQuery = "SELECT COUNT(e) FROM Employee e")
-	Page<Employee> findEmployeesWithEmployeeNumberAsc(
+				AND (d.name LIKE %:departmentName%)
+		      	AND (e.position LIKE %:position%)
+				AND (:status IS NULL OR e.status = :status)
+		    	AND (:idAfter IS NULL OR
+					      (e.employeeNumber > :cursorEmployeeNumber OR
+							      e.employeeNumber = :cursorEmployeeNumber AND e.id > :idAfter))
+		""")
+	List<Employee> findEmployeesWithEmployeeNumberAsc(
 		@Param("nameOrEmail") String nameOrEmail,
 		@Param("employeeNumber") String employeeNumber,
 		@Param("departmentName") String departmentName,
@@ -156,17 +151,16 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 
 	@Query(value = """
 		SELECT e FROM Employee e
+		JOIN FETCH e.department d
 		WHERE (e.name LIKE %:nameOrEmail% OR e.email LIKE %:nameOrEmail%)
-		      AND (:employeeNumber IS NULL OR e.employeeNumber = :employeeNumber)
-		      AND (:departmentName IS NULL OR e.department.name = :departmentName)
-		      AND (:position IS NULL OR e.position = :position)
-		      AND ( e.hireDate >= :hireDateFrom)
-			  AND ( e.hireDate <= :hireDateTo)
-		      AND (:status IS NULL OR e.status = :status)
-		      AND ((:cursorName IS NULL AND :idAfter IS NULL) OR
-		           (e.name < :cursorName OR (e.name = :cursorName AND (e.id < :idAfter OR :idAfter IS NULL))))
-		""", countQuery = "SELECT COUNT(e) FROM Employee e")
-	Page<Employee> findEmployeesWithNameDesc(
+				AND (d.name LIKE %:departmentName%)
+		      	AND (e.position LIKE %:position%)
+				AND (:status IS NULL OR e.status = :status)
+		    	AND (:idAfter IS NULL OR
+					      (e.name < :cursorName OR
+							      e.name = :cursorName AND e.id < :idAfter))
+		""")
+	List<Employee> findEmployeesWithNameDesc(
 		@Param("nameOrEmail") String nameOrEmail,
 		@Param("employeeNumber") String employeeNumber,
 		@Param("departmentName") String departmentName,
@@ -179,20 +173,18 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 		Pageable pageable
 	);
 
-	@Query(value = "SELECT e FROM Employee e " +
-		"LEFT JOIN e.department d " +
-		"WHERE (:idAfter IS NULL OR e.id > :idAfter) AND " +
-		"(:nameOrEmail IS NULL OR e.name LIKE CONCAT('%', CAST(:nameOrEmail AS string), '%') OR " +
-		" e.email LIKE CONCAT('%', CAST(:nameOrEmail AS string), '%')) AND " +
-		"(:employeeNumber IS NULL OR e.employeeNumber LIKE CONCAT('%', CAST(:employeeNumber AS string), '%')) AND " +
-		"(:departmentName IS NULL OR d.name LIKE CONCAT('%', CAST(:departmentName AS string), '%')) AND " +
-		"(:position IS NULL OR e.position LIKE CONCAT('%', CAST(:position AS string), '%')) AND " +
-		"(:hireDateFrom IS NULL OR e.hireDate >= :hireDateFrom) AND " +
-		"(:hireDateTo IS NULL OR e.hireDate <= :hireDateTo) AND " +
-		"(:status IS NULL OR CAST(e.status AS string) = :status) OR " +
-		"(e.name < :cursorName OR (e.name = :cursorName AND (e.id < :idAfter OR :idAfter IS NULL)))",
-		countQuery = "SELECT COUNT(e) FROM Employee e")
-	Page<Employee> findEmployeesWithNameAsc(
+	@Query(value = """
+		SELECT e FROM Employee e
+		JOIN FETCH e.department d
+		WHERE (e.name LIKE %:nameOrEmail% OR e.email LIKE %:nameOrEmail%)
+				AND (d.name LIKE %:departmentName%)
+		      	AND (e.position LIKE %:position%)
+				AND (:status IS NULL OR e.status = :status)
+		    	AND (:idAfter IS NULL OR
+					      (e.name > :cursorName OR
+							      e.name = :cursorName AND e.id > :idAfter))
+		""")
+	List<Employee> findEmployeesWithNameAsc(
 		@Param("nameOrEmail") String nameOrEmail,
 		@Param("employeeNumber") String employeeNumber,
 		@Param("departmentName") String departmentName,
@@ -211,4 +203,15 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 		"FROM Employee e")
 	Stream<EmployeeDto> findAllEmployeesStream();
 
+	@Query("""
+		SELECT COUNT(e) FROM Employee e
+				WHERE (e.name LIKE %:nameOrEmail% OR e.email LIKE %:nameOrEmail%)
+						AND (e.position LIKE %:position%)
+						AND (:status IS NULL OR e.status = :status)
+		""")
+	Long getCount(
+		String nameOrEmail,
+		String position,
+		EmployeeStatus status
+	);
 }

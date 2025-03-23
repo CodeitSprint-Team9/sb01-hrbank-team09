@@ -1,5 +1,7 @@
 package com.team09.sb01hrbank09.controller;
 
+import java.time.LocalDate;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -49,6 +51,19 @@ public class DepartmentController implements DepartmentApi {
 		if (nameOrDescription == null) {
 			nameOrDescription = "";
 		}
+
+		if (cursor == null) {
+			if (sortField.equalsIgnoreCase("name")) {
+				cursor = "";
+			} else {
+				if (sortDirection.equalsIgnoreCase("asc")) {
+					cursor = LocalDate.parse("1970-01-01").toString();
+				} else {
+					cursor = LocalDate.parse("9999-12-31").toString();
+				}
+			}
+		}
+
 		CursorPageRequestDepartment request = new CursorPageRequestDepartment(
 			nameOrDescription, idAfter, cursor, size, sortField, sortDirection
 		);

@@ -34,7 +34,7 @@ public interface BackupApi {
 		Instant startedAtFrom,
 		Instant startedAtTo,
 		Long idAfter,
-		String cursor,
+		Instant cursor,
 		int size,
 		String sortField,
 		String sortDirection

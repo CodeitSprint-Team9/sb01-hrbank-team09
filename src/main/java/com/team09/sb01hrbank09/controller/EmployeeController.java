@@ -78,6 +78,18 @@ public class EmployeeController implements EmployeeApi {
 		}
 
 		nameOrEmail = nameOrEmail != null ? nameOrEmail : "";
+		departmentName = departmentName != null ? departmentName : "";
+		position = position != null ? position : "";
+
+		if (sortField.equalsIgnoreCase("hireDate")) {
+			if (sortDirection.equalsIgnoreCase("asc")) {
+				cursor = cursor != null ? cursor : LocalDate.parse("1970-01-01").toString();
+			} else {
+				cursor = cursor != null ? cursor : LocalDate.parse("9999-12-31").toString();
+			}
+		} else {
+			cursor = cursor != null ? cursor : "";
+		}
 
 		// status 필드 검증
 		//List<String> validStatuses = Arrays.asList("ACTIVE", "ON_LEAVE", "RESIGNED");

@@ -28,7 +28,7 @@ public interface EmployeeServiceInterface {
 
 	CursorPageResponseEmployeeDto findEmployeeList(String nameOrEmail, String employeeNumber, String departmentName,
 		String position, LocalDate hireDateFrom, LocalDate hireDateTo, EmployeeStatus status, Long idAfter,
-		Object cursor, int size,
+		String cursor, int size,
 		String sortField, String sortDirection);
 
 	boolean deleteEmployee(Long id, String ipAdress);
