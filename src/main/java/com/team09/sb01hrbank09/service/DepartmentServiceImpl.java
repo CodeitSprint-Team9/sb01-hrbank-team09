@@ -1,9 +1,9 @@
 package com.team09.sb01hrbank09.service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -77,40 +77,78 @@ public class DepartmentServiceImpl implements DepartmentServiceInterface {
 	public CursorPageResponseDepartmentDto findDepartmentList(CursorPageRequestDepartment request) {
 		validateRequest(request);
 
-		String sortField = request.sortField();
-		String sortDirection = request.sortDirection();
+		Sort sort = Sort.by(Sort.Direction.fromString(request.sortDirection()), request.sortField());
 
-		Sort.Order sortOrder =
-			sortDirection.equalsIgnoreCase("desc") ? Sort.Order.desc(sortField) : Sort.Order.asc(sortField);
-		Sort sort = Sort.by(sortOrder);
 		Pageable pageable = PageRequest.of(0, request.size() + 1, sort);
 
-		// Pageable pageable = PageRequest.of(request.cursor() != null ? Integer.parseInt(request.cursor()) : 0,
-		// 	request.size(), sort);
-
-		Page<Department> departments;
-
-		if (sortOrder.isAscending()) {
-			departments = departmentRepository.findDepartmentOrderByIdAsc(request.nameOrDescription(), request.idAfter(), pageable);
+		List<Department> departments;
+		if (request.sortField().equalsIgnoreCase("name")) {
+			if (request.sortDirection().equalsIgnoreCase("asc")) {
+				departments = departmentRepository.findDepartmentByNameOrderByIdAsc(
+					request.nameOrDescription(),
+					request.idAfter(),
+					request.cursor(),
+					pageable
+				);
+			} else {
+				departments = departmentRepository.findDepartmentByNameOrderByIdDesc(
+					request.nameOrDescription(),
+					request.idAfter(),
+					request.cursor(),
+					pageable
+				);
+			}
+		} else {
+			if (request.sortDirection().equalsIgnoreCase("asc")) {
+				departments = departmentRepository.findDepartmentByEstablishedDateOrderByIdAsc(
+					request.nameOrDescription(),
+					request.idAfter(),
+					LocalDate.parse(request.cursor()),
+					pageable
+				);
+			} else {
+				departments = departmentRepository.findDepartmentByEstablishedDateOrderByIdDesc(
+					request.nameOrDescription(),
+					request.idAfter(),
+					LocalDate.parse(request.cursor()),
+					pageable
+				);
+			}
 		}
-		else {
-			departments = departmentRepository.findDepartmentOrderByIdDesc(request.nameOrDescription(), request.idAfter(), pageable);
+
+		boolean hasNext = false;
+		if (departments.size() > request.size()) {
+			hasNext = true;
+			departments = departments.subList(0, request.size());
+		}
+		Long nextIdAfter = null;
+
+		Long totalElements = departmentRepository.getCount(request.nameOrDescription());
+
+		String nextCursor = null;
+		if (!departments.isEmpty()) {
+			Department lastDepartment = departments.get(departments.size() - 1);
+			nextIdAfter = lastDepartment.getId();
+
+			if (request.sortField().equalsIgnoreCase("name")) {
+				nextCursor = String.valueOf(lastDepartment.getName());
+			} else {
+				nextCursor = String.valueOf(lastDepartment.getEstablishedDate());
+			}
 		}
 
-		// //Page<Department> departments = departmentRepository.findDepartment(request.nameOrDescription(),
-		// 	request.idAfter(), pageable);
-		List<Department> departmentList = departments.getContent();
-
-		boolean hasNext = departmentList.size() > request.size();
-		if (hasNext) {
-			departmentList = departmentList.subList(0, request.size());
-		}
-
-		List<DepartmentDto> departmentDtos = departmentList.stream()
+		List<DepartmentDto> departmentDtos = departments.stream()
 			.map(departmentMapper::departmentToDto)
 			.toList();
 
-		return toCursorPageResponse(departmentDtos, request, departments, hasNext);
+		return new CursorPageResponseDepartmentDto(
+			departmentDtos,
+			nextCursor,
+			nextIdAfter,
+			request.size(),
+			totalElements,
+			hasNext
+		);
 	}
 
 	private void validateRequest(CursorPageRequestDepartment request) {
@@ -124,29 +162,30 @@ public class DepartmentServiceImpl implements DepartmentServiceInterface {
 		}
 	}
 
-	private CursorPageResponseDepartmentDto toCursorPageResponse(List<DepartmentDto> dtos,
-		CursorPageRequestDepartment request, Page<Department> departments, boolean hasNext) {
-		Long nextIdAfter = null;
-		String nextCursor = null;
-		if (!dtos.isEmpty()) {
-			DepartmentDto lastDepartment = dtos.get(dtos.size() - 1);
-			nextIdAfter = lastDepartment.id();
-			nextCursor = String.valueOf(lastDepartment.name()); // TODO:
-		}
-
-		Long totalElements = departmentRepository.getCount();
-
-		//Long totalElements = departments.getTotalElements();
-
-		return new CursorPageResponseDepartmentDto(
-			dtos,
-			nextCursor,
-			nextIdAfter,
-			request.size(),
-			totalElements,
-			hasNext
-		);
-	}
+	// private CursorPageResponseDepartmentDto toCursorPageResponse(List<DepartmentDto> dtos,
+	// 	CursorPageRequestDepartment request, Page<Department> departments, boolean hasNext, String sortField) {
+	// 	Long nextIdAfter = null;
+	// 	String nextCursor = null;
+	// 	if (!dtos.isEmpty()) {
+	// 		DepartmentDto lastDepartment = dtos.get(dtos.size() - 1);
+	// 		nextIdAfter = lastDepartment.id();
+	// 		if (sortField.equals("name")) {
+	// 			nextCursor = String.valueOf(lastDepartment.name());
+	// 		} else
+	// 			nextCursor = String.valueOf(lastDepartment.establishedDate());
+	// 	}
+	//
+	// 	Long totalElements = departmentRepository.getCount(request.nameOrDescription());
+	//
+	// 	return new CursorPageResponseDepartmentDto(
+	// 		dtos,
+	// 		nextCursor,
+	// 		nextIdAfter,
+	// 		request.size(),
+	// 		totalElements,
+	// 		hasNext
+	// 	);
+	// }
 
 	@Override
 	@Transactional(readOnly = true)
