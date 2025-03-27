@@ -1,5 +1,6 @@
 package com.team09.sb01hrbank09.controller;
 
+import com.team09.sb01hrbank09.dto.request.CursorPageRequestEmployeeDto;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
@@ -56,11 +57,8 @@ public class EmployeeController implements EmployeeApi {
 	@GetMapping
 	public ResponseEntity<CursorPageResponseEmployeeDto> findEmployeeList(
 		@RequestParam(required = false) String nameOrEmail,
-		@RequestParam(required = false) String employeeNumber,
 		@RequestParam(required = false) String departmentName,
 		@RequestParam(required = false) String position,
-		@RequestParam(required = false) LocalDate hireDateFrom,
-		@RequestParam(required = false) LocalDate hireDateTo,
 		@RequestParam(required = false) EmployeeStatus status,
 		@RequestParam(required = false) Long idAfter,
 		@RequestParam(required = false) String cursor,
@@ -68,14 +66,6 @@ public class EmployeeController implements EmployeeApi {
 		@RequestParam(defaultValue = "name") String sortField,
 		@RequestParam(defaultValue = "asc") String sortDirection
 	) {
-		LocalDate parsedHireDateFrom = null;
-		LocalDate parsedHireDateTo = null;
-		if (hireDateFrom != null) {
-			parsedHireDateFrom = LocalDate.parse("1970-01-01");
-		}
-		if (hireDateTo != null) {
-			parsedHireDateTo = LocalDate.parse("9999-12-31");
-		}
 
 		nameOrEmail = nameOrEmail != null ? nameOrEmail : "";
 		departmentName = departmentName != null ? departmentName : "";
@@ -91,13 +81,21 @@ public class EmployeeController implements EmployeeApi {
 			cursor = cursor != null ? cursor : "";
 		}
 
+		CursorPageRequestEmployeeDto request = new CursorPageRequestEmployeeDto(
+				nameOrEmail,
+				departmentName,
+				position,
+				status,
+				idAfter,
+				cursor,
+				size,
+				sortField,
+				sortDirection
+		);
+
 		// status 필드 검증
 		//List<String> validStatuses = Arrays.asList("ACTIVE", "ON_LEAVE", "RESIGNED");
-		CursorPageResponseEmployeeDto response = employeeServiceInterface.findEmployeeList(
-			nameOrEmail, employeeNumber, departmentName, position,
-			parsedHireDateFrom, parsedHireDateTo, status, idAfter, cursor,
-			size, sortField, sortDirection
-		);
+		CursorPageResponseEmployeeDto response = employeeServiceInterface.findEmployeeList(request);
 		return ResponseEntity.ok(response);
 	}
 
