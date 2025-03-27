@@ -66,11 +66,8 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 		""")
 	List<Employee> findEmployeesWithHireDateDesc(
 		@Param("nameOrEmail") String nameOrEmail,
-		@Param("employeeNumber") String employeeNumber,
 		@Param("departmentName") String departmentName,
 		@Param("position") String position,
-		@Param("hireDateFrom") LocalDate hireDateFrom,
-		@Param("hireDateTo") LocalDate hireDateTo,
 		@Param("status") EmployeeStatus status,
 		@Param("cursorHireDate") LocalDate cursorHireDate,
 		@Param("idAfter") Long idAfter,
@@ -90,11 +87,8 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 		""")
 	List<Employee> findEmployeesWithHireDateAsc(
 		@Param("nameOrEmail") String nameOrEmail,
-		@Param("employeeNumber") String employeeNumber,
 		@Param("departmentName") String departmentName,
 		@Param("position") String position,
-		@Param("hireDateFrom") LocalDate hireDateFrom,
-		@Param("hireDateTo") LocalDate hireDateTo,
 		@Param("status") EmployeeStatus status,
 		@Param("cursorHireDate") LocalDate cursorHireDate,
 		@Param("idAfter") Long idAfter,
@@ -114,11 +108,8 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 		""")
 	List<Employee> findEmployeesWithEmployeeNumberDesc(
 		@Param("nameOrEmail") String nameOrEmail,
-		@Param("employeeNumber") String employeeNumber,
 		@Param("departmentName") String departmentName,
 		@Param("position") String position,
-		@Param("hireDateFrom") LocalDate hireDateFrom,
-		@Param("hireDateTo") LocalDate hireDateTo,
 		@Param("status") EmployeeStatus status,
 		@Param("cursorEmployeeNumber") String cursorEmployeeNumber,
 		@Param("idAfter") Long idAfter,
@@ -138,11 +129,8 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 		""")
 	List<Employee> findEmployeesWithEmployeeNumberAsc(
 		@Param("nameOrEmail") String nameOrEmail,
-		@Param("employeeNumber") String employeeNumber,
 		@Param("departmentName") String departmentName,
 		@Param("position") String position,
-		@Param("hireDateFrom") LocalDate hireDateFrom,
-		@Param("hireDateTo") LocalDate hireDateTo,
 		@Param("status") EmployeeStatus status,
 		@Param("cursorEmployeeNumber") String cursorEmployeeNumber,
 		@Param("idAfter") Long idAfter,
@@ -162,11 +150,8 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 		""")
 	List<Employee> findEmployeesWithNameDesc(
 		@Param("nameOrEmail") String nameOrEmail,
-		@Param("employeeNumber") String employeeNumber,
 		@Param("departmentName") String departmentName,
 		@Param("position") String position,
-		@Param("hireDateFrom") LocalDate hireDateFrom,
-		@Param("hireDateTo") LocalDate hireDateTo,
 		@Param("status") EmployeeStatus status,
 		@Param("cursorName") String cursorName,
 		@Param("idAfter") Long idAfter,
@@ -174,23 +159,20 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 	);
 
 	@Query(value = """
-		SELECT e FROM Employee e
-		JOIN FETCH e.department d
-		WHERE (e.name LIKE %:nameOrEmail% OR e.email LIKE %:nameOrEmail%)
-				AND (d.name LIKE %:departmentName%)
-		      	AND (e.position LIKE %:position%)
-				AND (:status IS NULL OR e.status = :status)
-		    	AND (:idAfter IS NULL OR
-					      (e.name > :cursorName OR
-							      e.name = :cursorName AND e.id > :idAfter))
-		""")
+			SELECT e FROM Employee e
+			JOIN FETCH e.department d
+			WHERE (UPPER(e.name) LIKE UPPER('%' || :nameOrEmail || '%') OR UPPER(e.email) LIKE UPPER('%' || :nameOrEmail || '%'))
+					AND (UPPER(d.name) LIKE UPPER('%' || :departmentName || '%'))
+			    AND (UPPER(e.position) LIKE UPPER('%' || :position || '%'))
+					AND (:status IS NULL OR e.status = :status)
+			    AND (:idAfter IS NULL OR
+						      (e.name > :cursorName OR
+								      e.name = :cursorName AND e.id > :idAfter))
+			""")
 	List<Employee> findEmployeesWithNameAsc(
 		@Param("nameOrEmail") String nameOrEmail,
-		@Param("employeeNumber") String employeeNumber,
 		@Param("departmentName") String departmentName,
 		@Param("position") String position,
-		@Param("hireDateFrom") LocalDate hireDateFrom,
-		@Param("hireDateTo") LocalDate hireDateTo,
 		@Param("status") EmployeeStatus status,
 		@Param("cursorName") String cursorName,
 		@Param("idAfter") Long idAfter,
@@ -227,4 +209,6 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 		@Param("fromDate") LocalDate fromDate,
 		@Param("toDate") LocalDate toDate
 	);
+
+	Long id(Long id);
 }

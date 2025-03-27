@@ -1,5 +1,6 @@
 package com.team09.sb01hrbank09.service;
 
+import com.team09.sb01hrbank09.dto.request.CursorPageRequestEmployeeDto;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -26,10 +27,7 @@ public interface EmployeeServiceInterface {
 
 	List<EmployeeDto> getEmployeeAllList();
 
-	CursorPageResponseEmployeeDto findEmployeeList(String nameOrEmail, String employeeNumber, String departmentName,
-		String position, LocalDate hireDateFrom, LocalDate hireDateTo, EmployeeStatus status, Long idAfter,
-		String cursor, int size,
-		String sortField, String sortDirection);
+	CursorPageResponseEmployeeDto findEmployeeList(CursorPageRequestEmployeeDto request);
 
 	boolean deleteEmployee(Long id, String ipAdress);
 
