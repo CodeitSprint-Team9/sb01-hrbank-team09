@@ -45,7 +45,7 @@ public class BackupContoller implements BackupApi {
 		@RequestParam(required = false) Instant startedAtFrom,
 		@RequestParam(required = false) Instant startedAtTo,
 		@RequestParam(required = false) Long idAfter,
-		@RequestParam(required = false) String cursor,
+		@RequestParam(required = false) Instant cursor,
 		@RequestParam(defaultValue = "10") int size,
 		@RequestParam(defaultValue = "startedAt") String sortField,
 		@RequestParam(defaultValue = "desc") String sortDirection
@@ -55,6 +55,12 @@ public class BackupContoller implements BackupApi {
 		worker = worker != null ? worker : "";
 		startedAtFrom = startedAtFrom != null ? startedAtFrom : Instant.parse("1970-01-01T00:00:00Z");
 		startedAtTo = startedAtTo != null ? startedAtTo : Instant.parse("9999-12-31T23:59:59Z");
+
+		if (sortDirection.equalsIgnoreCase("asc")) {
+			cursor = cursor != null ? cursor : Instant.parse("1970-01-01T00:00:00Z");
+		} else {
+			cursor = cursor != null ? cursor : Instant.parse("9999-12-31T23:59:59Z");
+		}
 
 		CursorPageRequestBackupDto requestDto = new CursorPageRequestBackupDto(
 			worker, status, startedAtFrom, startedAtTo, idAfter, cursor, size, sortField, sortDirection

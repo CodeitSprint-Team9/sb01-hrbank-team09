@@ -1,5 +1,6 @@
 package com.team09.sb01hrbank09.controller;
 
+import com.team09.sb01hrbank09.dto.request.CursorPageRequestEmployeeDto;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
@@ -25,6 +26,7 @@ import com.team09.sb01hrbank09.dto.entityDto.EmployeeTrendDto;
 import com.team09.sb01hrbank09.dto.request.EmployeeCreateRequest;
 import com.team09.sb01hrbank09.dto.request.EmployeeUpdateRequest;
 import com.team09.sb01hrbank09.dto.response.CursorPageResponseEmployeeDto;
+import com.team09.sb01hrbank09.entity.Enum.EmployeeStatus;
 import com.team09.sb01hrbank09.service.EmployeeServiceInterface;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -55,34 +57,45 @@ public class EmployeeController implements EmployeeApi {
 	@GetMapping
 	public ResponseEntity<CursorPageResponseEmployeeDto> findEmployeeList(
 		@RequestParam(required = false) String nameOrEmail,
-		@RequestParam(required = false) String employeeNumber,
 		@RequestParam(required = false) String departmentName,
 		@RequestParam(required = false) String position,
-		@RequestParam(required = false) LocalDate hireDateFrom,
-		@RequestParam(required = false) LocalDate hireDateTo,
-		@RequestParam(required = false) String status,
+		@RequestParam(required = false) EmployeeStatus status,
 		@RequestParam(required = false) Long idAfter,
 		@RequestParam(required = false) String cursor,
 		@RequestParam(defaultValue = "10") int size,
 		@RequestParam(defaultValue = "name") String sortField,
 		@RequestParam(defaultValue = "asc") String sortDirection
 	) {
-		LocalDate parsedHireDateFrom = null;
-		LocalDate parsedHireDateTo = null;
-		if (hireDateFrom != null) {
-			parsedHireDateFrom = LocalDate.parse("1970-01-01");
+
+		nameOrEmail = nameOrEmail != null ? nameOrEmail : "";
+		departmentName = departmentName != null ? departmentName : "";
+		position = position != null ? position : "";
+
+		if (sortField.equalsIgnoreCase("hireDate")) {
+			if (sortDirection.equalsIgnoreCase("asc")) {
+				cursor = cursor != null ? cursor : LocalDate.parse("1970-01-01").toString();
+			} else {
+				cursor = cursor != null ? cursor : LocalDate.parse("9999-12-31").toString();
+			}
+		} else {
+			cursor = cursor != null ? cursor : "";
 		}
-		if (hireDateTo != null) {
-			parsedHireDateTo = LocalDate.parse("9999-12-31");
-		}
+
+		CursorPageRequestEmployeeDto request = new CursorPageRequestEmployeeDto(
+				nameOrEmail,
+				departmentName,
+				position,
+				status,
+				idAfter,
+				cursor,
+				size,
+				sortField,
+				sortDirection
+		);
 
 		// status 필드 검증
 		//List<String> validStatuses = Arrays.asList("ACTIVE", "ON_LEAVE", "RESIGNED");
-		CursorPageResponseEmployeeDto response = employeeServiceInterface.findEmployeeList(
-			nameOrEmail, employeeNumber, departmentName, position,
-			parsedHireDateFrom, parsedHireDateTo, status, idAfter, cursor,
-			size, sortField, sortDirection
-		);
+		CursorPageResponseEmployeeDto response = employeeServiceInterface.findEmployeeList(request);
 		return ResponseEntity.ok(response);
 	}
 

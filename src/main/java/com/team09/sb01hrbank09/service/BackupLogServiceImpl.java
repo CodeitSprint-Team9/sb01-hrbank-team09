@@ -6,7 +6,6 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -92,31 +91,37 @@ public class BackupLogServiceImpl implements BackupLogServiceInterface {
 		Sort sort = Sort.by(Sort.Direction.fromString(request.sortDirection()), request.sortField());
 		Pageable pageable = PageRequest.of(0, request.size() + 1, sort);
 
-		Page<Backup> backups = getBackups(request, pageable);
-		List<Backup> backupList = backups.getContent();
+		List<Backup> backups = getBackups(request, pageable);
 
-		boolean hasNext = backupList.size() > request.size();
-		if (hasNext) {
-			backupList = backupList.subList(0, request.size());
+		boolean hasNext = false;
+		if (backups.size() > request.size()) {
+			hasNext = true;
+			backups = backups.subList(0, request.size());
 		}
 
-		List<BackupDto> backupDtos = backupList.stream()
-			.map(backupMapper::backupToDto)
-			.toList();
-
-		Long nextIdAfter = null;
-		String nextCursor = null;
-		if (!backupDtos.isEmpty()) {
-			nextIdAfter = backupDtos.get(backupDtos.size() - 1).id();
-			nextCursor = String.valueOf(backupDtos.get(backupDtos.size() - 1).startedAt());
-		}
-
-		Long totalCount = backupRepository.countBackup(
+		Long totalCount = backupRepository.getCount(
 			request.worker(),
 			request.status(),
 			request.startedAtFrom(),
 			request.startedAtTo()
 		);
+
+		Long nextIdAfter = null;
+		String nextCursor = null;
+		if (!backups.isEmpty()) {
+			Backup lastBackup = backups.get(backups.size() - 1);
+			nextIdAfter = lastBackup.getId();
+
+			if (request.sortField().equalsIgnoreCase("startedAt")) {
+				nextCursor = String.valueOf(lastBackup.getStartedAt());
+			} else {
+				nextCursor = String.valueOf(lastBackup.getEndedAt());
+			}
+		}
+
+		List<BackupDto> backupDtos = backups.stream()
+			.map(backupMapper::backupToDto)
+			.toList();
 
 		return new CursorPageResponseBackupDto(
 			backupDtos,
@@ -128,24 +133,51 @@ public class BackupLogServiceImpl implements BackupLogServiceInterface {
 		);
 	}
 
-	private Page<Backup> getBackups(CursorPageRequestBackupDto request, Pageable pageable) {
-		if (request.sortDirection().equalsIgnoreCase("ASC")) {
-			return backupRepository.findBackupsByCursorOrderByIdAsc(
+	private List<Backup> getBackups(CursorPageRequestBackupDto request, Pageable pageable) {
+
+		if (request.sortField().equalsIgnoreCase("startedAt")) {
+			if (request.sortDirection().equalsIgnoreCase("asc")) {
+				return backupRepository.findBackupsByStartedAtOrderByIdAsc(
+					request.worker(),
+					request.status(),
+					request.startedAtFrom(),
+					request.startedAtTo(),
+					request.idAfter(),
+					request.cursor(),
+					pageable
+				);
+			}
+
+			return backupRepository.findBackupsByStartedAtOrderByIdDesc(
 				request.worker(),
 				request.status(),
 				request.startedAtFrom(),
 				request.startedAtTo(),
 				request.idAfter(),
+				request.cursor(),
 				pageable
 			);
 		}
 
-		return backupRepository.findBackupsByCursorOrderByIdDesc(
+		if (request.sortDirection().equalsIgnoreCase("asc")) {
+			return backupRepository.findBackupsByEndedAtOrderByIdAsc(
+				request.worker(),
+				request.status(),
+				request.startedAtFrom(),
+				request.startedAtTo(),
+				request.idAfter(),
+				request.cursor(),
+				pageable
+			);
+		}
+
+		return backupRepository.findBackupsByEndedAtOrderByIdDesc(
 			request.worker(),
 			request.status(),
 			request.startedAtFrom(),
 			request.startedAtTo(),
 			request.idAfter(),
+			request.cursor(),
 			pageable
 		);
 	}
